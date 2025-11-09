@@ -1,0 +1,29 @@
+docker compose up -d ollama
+docker compose ps
+docker compose logs ollama
+docker compose exec ollama ollama list
+export OLLAMA_HOST=http://localhost:11434
+docker compose exec ollama ollama pull phi3:
+docker compose build
+docker build -t praxisprojekt:latest .
+docker run praxisprojekt:latest
+docker image ls 
+http://localhost:8501
+export OLLAMA_HOST=0.0.0.0:11434
+ollama serve
+docker compose build app - Nur app bauen
+# 1) Nicht genutzte Container/Images/Netzwerke/Volumes aufräumen
+docker system prune -a --volumes
+
+# 2) Build-Cache komplett leeren
+docker builder prune -a
+
+# 3) (optional/zusätzlich) explizit ungenutzte Volumes weg
+docker volume prune
+docker system df
+
+git remote -v 
+git remote remove origin
+git remote add origin https://github.com/Jona-Bach/praxisprojekt_code.git
+git push -u origin main --force
+https://github.com/Jona-Bach/praxisprojekt_code.git
