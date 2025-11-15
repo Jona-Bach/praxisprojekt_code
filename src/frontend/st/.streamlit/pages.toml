@@ -1,9 +1,0 @@
-[[pages]]
-path = "main.py"
-name = "🏠 Start"
-icon = "🏠"
-
-[[pages]]
-path = "testpage.py"
-name = "📊 Datenübersicht"
-icon = "📈"

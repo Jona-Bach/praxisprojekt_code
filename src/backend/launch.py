@@ -4,7 +4,7 @@ import sys
 
 def main():
     # Pfad zur Streamlit-Datei
-    app_path = os.path.join("src", "frontend", "st", "main.py")
+    app_path = os.path.join("src", "frontend", "st", "Start.py")
 
     # Streamlit-Kommando
     cmd = [

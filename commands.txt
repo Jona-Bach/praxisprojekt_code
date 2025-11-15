@@ -12,6 +12,7 @@ http://localhost:8501
 export OLLAMA_HOST=0.0.0.0:11434
 ollama serve
 docker compose build app - Nur app bauen
+
 # 1) Nicht genutzte Container/Images/Netzwerke/Volumes aufräumen
 docker system prune -a --volumes
 
@@ -22,6 +23,13 @@ docker builder prune -a
 docker volume prune
 docker system df
 
+# 1) Git-Verzeichnis löschen (macht aus deinem Ordner ein unversioniertes Projekt)
+rm -rf .git
+
+# 2) Neu initialisieren und erster Commit
+git init
+git add -A
+git commit -m "Initial commit"
 git remote -v 
 git remote remove origin
 git remote add origin https://github.com/Jona-Bach/praxisprojekt_code.git
