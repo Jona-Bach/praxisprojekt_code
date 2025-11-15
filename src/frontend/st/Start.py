@@ -1,4 +1,18 @@
 import streamlit as st
+from pathlib import Path
+# Ordner der aktuellen Datei (z.B. app.py)
+BASE_DIR = Path(__file__).resolve().parent
+st.session_state["BASE_DIR"] = BASE_DIR
+
+
+# Pfad zur PNG
+img_path_fsbar = BASE_DIR / "assets" / "finsightbar.png"
+img_path_fsold = BASE_DIR / "assets" / "logofinsightold.png"
+
+
+
+
+
 
 #__________________________Header____________________________
 
@@ -7,7 +21,7 @@ st.set_page_config(page_title="Welcome", page_icon="👋")
 
 #__________________________SIDEBAR___________________________
 st.sidebar.subheader("Welcome to FinSight!")
-st.sidebar.image("./assets/finsightbar.png")
+st.sidebar.image(str(img_path_fsbar))
 st.sidebar.divider()
 #____________________________________________________________
 
@@ -21,41 +35,42 @@ st.title("")
 
 #__________________________Welcome______________________________
 with tab1:
-    st.image("./assets/logofinsightold.png")
-
+    st.image(str(img_path_fsold))
 
 #__________________________Settings______________________________
 
-st.divider()
-st.header("Assistant Settings:")
 
-# 1. Default nur EINMAL setzen
-if "assistant_base_url" not in st.session_state:
-    st.session_state["assistant_base_url"] = "http://host.docker.internal:11434"
+with tab3:
+    st.divider()
+    st.header("Assistant Settings:")
 
-# 2. Mapping von Option → URL
-options = ["Local Ollama", "Ollama Container"]
-url_map = {
-    "Local Ollama": "http://host.docker.internal:11434",
-    "Ollama Container": "http://ollama:11434",
-}
+    # 1. Default nur EINMAL setzen
+    if "assistant_base_url" not in st.session_state:
+        st.session_state["assistant_base_url"] = "http://host.docker.internal:11434"
 
-# 3. aktuelle Auswahl aus session_state ableiten
-current_url = st.session_state["assistant_base_url"]
-if current_url == url_map["Local Ollama"]:
-    default_index = 0
-else:
-    default_index = 1
+    # 2. Mapping von Option → URL
+    options = ["Local Ollama", "Ollama Container"]
+    url_map = {
+        "Local Ollama": "http://host.docker.internal:11434",
+        "Ollama Container": "http://ollama:11434",
+    }
 
-assistant_llm_choice = st.radio(   
-    "Change Source:",
-    options=options,
-    key="assistant_llm_choice",
-    index=default_index,        
-    horizontal=True,
-)
+    # 3. aktuelle Auswahl aus session_state ableiten
+    current_url = st.session_state["assistant_base_url"]
+    if current_url == url_map["Local Ollama"]:
+        default_index = 0
+    else:
+        default_index = 1
 
-# 4. Auswahl ins session_state schreiben
-st.session_state["assistant_base_url"] = url_map[assistant_llm_choice]
+    assistant_llm_choice = st.radio(   
+        "Change Source:",
+        options=options,
+        key="assistant_llm_choice",
+        index=default_index,        
+        horizontal=True,
+    )
 
-st.info(f"Current LLM Source: {st.session_state['assistant_base_url']}")
+    # 4. Auswahl ins session_state schreiben
+    st.session_state["assistant_base_url"] = url_map[assistant_llm_choice]
+
+    st.info(f"Current LLM Source: {st.session_state['assistant_base_url']}")

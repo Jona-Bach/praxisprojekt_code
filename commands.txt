@@ -12,6 +12,7 @@ http://localhost:8501
 export OLLAMA_HOST=0.0.0.0:11434
 ollama serve
 docker compose build app - Nur app bauen
+docker compose build app --no-cache
 
 # 1) Nicht genutzte Container/Images/Netzwerke/Volumes aufräumen
 docker system prune -a --volumes

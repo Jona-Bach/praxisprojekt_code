@@ -1,5 +1,18 @@
 import streamlit as st
 import requests
+from pathlib import Path
+
+if "BASE_DIR" in st.session_state:
+    BASE_DIR = st.session_state["BASE_DIR"]
+else:
+    BASE_DIR = Path(__file__).resolve().parent
+
+
+
+# Pfad zur PNG
+img_path_fsbar = BASE_DIR / "assets" / "finsightbar.png"
+img_path_fsold = BASE_DIR / "assets" / "logofinsightold.png"
+assistant_info = BASE_DIR / "assets" / "assistantinfos.txt"
 
 #__________________________Header____________________________
 
@@ -8,7 +21,7 @@ st.set_page_config(page_title="Digital Assistant", page_icon="🤖")
 
 #__________________________SIDEBAR___________________________
 st.sidebar.subheader("Digital Assistant")
-st.sidebar.image("./assets/finsightbar.png")
+st.sidebar.image(str(img_path_fsbar))
 st.sidebar.divider()
 if st.sidebar.button("Chat zurücksetzen"):
     st.session_state.messages = []
@@ -36,7 +49,7 @@ def check_connection(base_url: str, timeout: float = 3.0) -> tuple[bool, str]:
 st.title("🤖 Digital Assistant")
 st.caption("""
 This is your personal digital assistant. You can ask him questions regarding this application
-if you need help. Please be aware that you need to habe a connection, to either the Ollama Container
+if you need help. Please be aware that the answer might take a while and that you need to have a connection, to either the Ollama Container
 or you own Ollama. You can see the status below:
 """)
 
@@ -51,7 +64,7 @@ else:
     st.error(msg)
 
 st.caption("""
-If you don't have a connection, you can go to the settings and change the connection to the Container Ollama version (currently local Ollama is selected)
+If you don't have a connection, you can go to the settings and change the connection to the Container Ollama version (standard: local Ollama is selected)
 otherwise please reread the "Setup" Guide in the Start Menu!
 """)
 st.divider()
@@ -66,14 +79,37 @@ for msg in st.session_state.messages:
         st.markdown(msg["content"])
 
 def bot_answer(base_url: str, model: str, prompt: str, timeout: float = 120.0) -> str:
-    r = requests.post(
-        f"{base_url}/api/generate",
-        json={"model": model, "prompt": prompt, "stream": False},
-        timeout=timeout,
-    )
-    r.raise_for_status()
-    data = r.json()
-    return data.get("response", "")
+    with open(str(assistant_info)) as file:
+        infos = file.read()
+
+        new_prompt = f"""
+        You are an assistant who answers strictly and only based on the INFORMATION below.
+
+        INFORMATION:
+        {infos}
+
+        RULES:
+        - Answer the question **only** using the INFORMATION above. 
+        - Do NOT add any extra details, explanations, assumptions, or background stories.
+        - Keep answers extremely short **max. 1–2 sentences**.
+        - Do NOT invent facts. Do NOT speculate. Do NOT add context.
+        - Keep the tone neutral and concise.
+
+        QUESTION:
+        {prompt}
+        """
+    try:
+        r = requests.post(
+            f"{base_url}/api/generate",
+            json={"model": model, "prompt": new_prompt, "stream": False},
+            timeout=timeout,
+        )
+        r.raise_for_status()
+        data = r.json()
+        return data.get("response", "")
+    except:
+        return ("""This did not work. Please make sure you have a valid connection and the modell installed!
+        Please read the Setup Guide if you unsure or check the settings""")
 
 if prompt := st.chat_input("Ask me something..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -85,7 +121,6 @@ if prompt := st.chat_input("Ask me something..."):
     st.session_state.messages.append({"role": "Assistant", "content": antwort})
     with st.chat_message("Assistant"):
         st.markdown(antwort)
-
 #___________________________________________________________________________________
 
 
