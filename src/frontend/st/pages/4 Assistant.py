@@ -12,6 +12,10 @@ else:
     img_path_fsbar = BASE_DIR / "assets_safety" / "finsightbar.png"
     img_path_fsold = BASE_DIR / "assets_safety" / "logofinsightold.png"
 
+if "model" in st.session_state:
+    model = st.session_state["model"]
+else:
+    model = "phi3:mini"
 
 
 #__________________________Header____________________________
@@ -65,8 +69,10 @@ else:
 
 st.caption("""
 If you don't have a connection, you can go to the settings and change the connection to the Container Ollama version (standard: local Ollama is selected)
-otherwise please reread the "Setup" Guide in the Start Menu!
+otherwise please reread the "Setup" Guide in the Start Menu! You can also change your Model in the settings. Larger models will give better output but will take longer to respond!
 """)
+
+st.caption(f"Current model: {model}. (You can change this in the settings)")
 st.divider()
 
 
@@ -116,7 +122,7 @@ if prompt := st.chat_input("Ask me something..."):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    antwort = bot_answer(base_url= base_url, model = "phi3:mini", prompt=prompt)
+    antwort = bot_answer(base_url= base_url, model = model, prompt=prompt)
 
     st.session_state.messages.append({"role": "Assistant", "content": antwort})
     with st.chat_message("Assistant"):

@@ -186,6 +186,7 @@ with tab3:
 
         # aktive Auswahl = custom first
         active_model = custom_model.strip() if custom_model.strip() else selected_model
+        st.session_state["model"] = active_model
 
         st.write(f"Selected Model: **{active_model}**")
 
