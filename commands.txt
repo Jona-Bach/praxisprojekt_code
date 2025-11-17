@@ -15,6 +15,7 @@ docker compose build app - Nur app bauen
 docker compose build app --no-cache
 
 python -m src.backend.api_services.av_connect
+python -m src.backend.scheduler
 
 # 1) Nicht genutzte Container/Images/Netzwerke/Volumes aufräumen
 docker system prune -a --volumes

@@ -4,7 +4,7 @@ import requests
 import json
 from ..data_model import tickers
 import time
-from ..database.db_functions import create_av_raw_entry
+from ..database.db_functions import create_av_raw_entry, create_av_pricing_entry
 load_dotenv()
 
 
@@ -254,4 +254,41 @@ def fetch_alphavantage_raw(symbol: str):
     print(f"✔ Rohdaten für {symbol} gespeichert.")
     return entry
 
-fetch_alphavantage_raw(symbol)
+def fetch_alphavantage_price_today(symbol: str):
+    """Holt nur den neuesten Tagespreis für einen Ticker und speichert ihn in AV_PRICING."""
+
+    print(f"\n📡 Lade heutigen Preis für {symbol} …")
+
+    data = av_request({
+        "function": "TIME_SERIES_DAILY_ADJUSTED",
+        "symbol": symbol,
+        "outputsize": "compact"
+    }) or {}
+
+    ts = data.get("Time Series (Daily)", {})
+
+    if not ts:
+        print(f"❌ Keine Tagespreise für {symbol} erhalten!")
+        return None
+
+    # Neuester Eintrag ist das erste Element
+    latest_date = sorted(ts.keys(), reverse=True)[0]
+    values = ts[latest_date]
+
+    entry = create_av_pricing_entry(
+        symbol=symbol,
+        date=latest_date,
+
+        open=values.get("1. open"),
+        high=values.get("2. high"),
+        low=values.get("3. low"),
+        close=values.get("4. close"),
+        adjusted_close=values.get("5. adjusted close"),
+
+        volume=values.get("6. volume"),
+        dividend_amount=values.get("7. dividend amount"),
+        split_coefficient=values.get("8. split coefficient"),
+    )
+
+    print(f"✔ Heutiger Preis für {symbol} gespeichert: {latest_date}")
+    return entry

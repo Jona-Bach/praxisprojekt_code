@@ -1,8 +1,9 @@
-from sqlalchemy import create_engine, Column, String, Integer, Float, ForeignKey, DateTime, inspect
+from sqlalchemy import create_engine, Column, String, Integer, Float, ForeignKey, DateTime, inspect, Date
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.exc import IntegrityError
+from datetime import datetime
 import os
 
 def create_av_alchemy_db(folder_name, db_name):
@@ -19,7 +20,7 @@ def create_av_alchemy_db(folder_name, db_name):
 
     return engine, Base, session, db_path
 
-engine, Base, session, dbpath = create_av_alchemy_db("data", "av_raw")
+engine, Base, session, dbpath = create_av_alchemy_db("data", "alphavantage")
 
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, Text
@@ -279,12 +280,48 @@ class AV_RAW(Base):
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
 
+class AV_PRICING(Base):
+    __tablename__ = "alphavantage__daily_pricing"
+
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    
+    # Symbol
+    symbol = Column(String, index=True, nullable=False)
+
+    # Datum der Kerze (Primary information)
+    date = Column(Date, index=True, nullable=False)
+
+    # Prices
+    open = Column(Float)               # 1. open
+    high = Column(Float)               # 2. high
+    low = Column(Float)                # 3. low
+    close = Column(Float)              # 4. close
+    adjusted_close = Column(Float)     # 5. adjusted close
+
+    # Volume + Corporate actions
+    volume = Column(Float)             # 6. volume
+    dividend_amount = Column(Float)    # 7. dividend amount
+    split_coefficient = Column(Float)  # 8. split coefficient
+
+    # Timestamp for insert/update
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+
+
+
 # -------------------------------------------------
 # Prüfen, ob die Tabelle existiert → falls nicht, erstellen
 # -------------------------------------------------
 inspector = inspect(engine)
 
 if "alphavantage_raw_kpi" not in inspector.get_table_names():
+    Base.metadata.create_all(engine)
+    print("✔ Tabelle erstellt.")
+else:
+    print("✔ Tabelle existiert bereits – kein Erstellen nötig.")
+
+if "alphavantage__daily_pricing" not in inspector.get_table_names():
     Base.metadata.create_all(engine)
     print("✔ Tabelle erstellt.")
 else:
@@ -665,4 +702,54 @@ def create_av_raw_entry(
         print(f"ERROR beim Speichern von {symbol}")
 
     print(f"✔ Rohdaten + KPIs für {symbol} gespeichert.")
+    return entry
+
+   
+def create_av_pricing_entry(
+    symbol: str,
+    date,  # kann str "YYYY-MM-DD" oder datetime.date sein
+
+    open: float = None,
+    high: float = None,
+    low: float = None,
+    close: float = None,
+    adjusted_close: float = None,
+
+    volume: float = None,
+    dividend_amount: float = None,
+    split_coefficient: float = None,
+):
+    """
+    Erzeugt einen AV_PRICING-Eintrag für TIME_SERIES_DAILY_ADJUSTED.
+    """
+
+    # Datum in datetime.date umwandeln, falls als String übergeben
+    if isinstance(date, str):
+        # AlphaVantage liefert Datum als "YYYY-MM-DD"
+        date = datetime.strptime(date, "%Y-%m-%d").date()
+
+    entry = AV_PRICING(
+        symbol=symbol,
+        date=date,
+
+        open=open,
+        high=high,
+        low=low,
+        close=close,
+        adjusted_close=adjusted_close,
+
+        volume=volume,
+        dividend_amount=dividend_amount,
+        split_coefficient=split_coefficient,
+    )
+
+    try:
+        session.add(entry)
+        session.commit()
+    except IntegrityError as e:
+        session.rollback()
+        print(f"ERROR beim Speichern von Pricing für {symbol} am {date}: {e}")
+        return None
+
+    print(f"✔ Pricing-Daten für {symbol} am {date} gespeichert.")
     return entry
