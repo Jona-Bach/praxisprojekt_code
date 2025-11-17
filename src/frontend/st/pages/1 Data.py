@@ -1,6 +1,7 @@
 import streamlit as st
 from pathlib import Path
-from backend.scheduler import load_data
+from backend.data_model import TICKERS
+from backend.scheduler import load_data, load_initial_data
 from backend.database.db_functions import get_table, get_table_names
 # Ordner der aktuellen Datei (z.B. app.py)
 BASE_DIR = Path(__file__).resolve().parent
@@ -26,8 +27,23 @@ else:
 st.sidebar.info(f"Last data update: {loaded_data_ts}")
 if st.sidebar.button("Update Data"):
     with st.spinner("Updating data (this might take a while...)"):
-        answer = load_data()
+        answer = load_initial_data()
         st.success(answer)
+
+
+t_choice = st.sidebar.multiselect(
+    "Choose Ticker",
+    options=sorted(TICKERS))
+
+st.session_state["chosen_tickers"] = t_choice
+
+if st.sidebar.button("Download Ticker Data"):
+    with st.spinner("Downloading data (this might take a while...)"):
+        answer = load_data(t_choice)
+        st.success(answer)
+
+
+
 #____________________________________________________________
 
 st.header("Alphavantage RAW-Data Table")
@@ -37,22 +53,3 @@ st.dataframe(df, hide_index=True)
 st.header("Alphavantage PRICING Table")
 df = get_table("alphavantage_daily_pricing")
 st.dataframe(df, hide_index= True)
-
-if st.button("All Tables"):
-    df = get_table_names("data/alphavantage.db")
-    tables = get_table_names("data/alphavantage.db")  # returns list
-
-    choice = st.radio("Tabellen:", tables)
-
-    if choice:
-        st.dataframe(get_table(choice))
-
-if st.button("Delete Data"):
-    st.warning("Are you sure you want to do this?")
-    
-    with st.expander("Confirm action"):
-        if st.button("Yes, do it!"):
-            st.success("Action executed!")
-        if st.button("Cancel"):
-            st.info("Canceled.")
-

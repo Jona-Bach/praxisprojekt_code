@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, String, Integer, Float, ForeignKey, DateTime, inspect, Date, text
+from sqlalchemy import create_engine, Column, String, Integer, Float, ForeignKey, DateTime, inspect, Date, text, Boolean
 from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
@@ -22,6 +22,7 @@ def create_av_alchemy_db(folder_name, db_name):
     return engine, Base, session, db_path
 
 engine, Base, session, dbpath = create_av_alchemy_db("data", "alphavantage")
+engine_2, Base_2, session_2, dbpath_2 = create_av_alchemy_db("data", "system_config")
 
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, Text
@@ -29,6 +30,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
+Base_2 = declarative_base()
 
 class AV_RAW(Base):
     __tablename__ = "alphavantage_raw_kpi"
@@ -280,6 +282,14 @@ class AV_RAW(Base):
     # ---- Metadata ----
     timestamp = Column(DateTime(timezone=True), server_default=func.now())
 
+class System_Config(Base_2):
+    __tablename__ = "assistant_config"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    Name = Column(String, nullable=False)
+    Value = Column(String)
+    Tag = Column(Boolean, nullable=False)
+
+
 
 class AV_PRICING(Base):
     __tablename__ = "alphavantage_daily_pricing"
@@ -315,6 +325,7 @@ class AV_PRICING(Base):
 # Prüfen, ob die Tabelle existiert → falls nicht, erstellen
 # -------------------------------------------------
 inspector = inspect(engine)
+inspector_cfg = inspect(engine_2)
 
 if "alphavantage_raw_kpi" not in inspector.get_table_names():
     Base.metadata.create_all(engine)
@@ -324,6 +335,12 @@ else:
 
 if "alphavantage_daily_pricing" not in inspector.get_table_names():
     Base.metadata.create_all(engine)
+    print("✔ Tabelle erstellt.")
+else:
+    print("✔ Tabelle existiert bereits – kein Erstellen nötig.")
+
+if "assistant_config" not in inspector_cfg.get_table_names():
+    Base_2.metadata.create_all(engine_2)
     print("✔ Tabelle erstellt.")
 else:
     print("✔ Tabelle existiert bereits – kein Erstellen nötig.")

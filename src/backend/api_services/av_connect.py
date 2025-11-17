@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import requests
 import json
-from ..data_model import tickers
+from ..data_model import initial_tickers
 import time
 from ..database.db_functions import create_av_raw_entry, create_av_pricing_entry
 load_dotenv()
@@ -17,7 +17,7 @@ ALPHAVANTAGE_BASE_SLEEP = 20  # z.B. 20 Sekunden
 # Wie lange gewartet wird, wenn ein "Note" (Rate Limit) kommt
 ALPHAVANTAGE_LIMIT_SLEEP = 75  # z.B. 75 Sekunden
 
-symbol = tickers[0]
+symbol = initial_tickers[0]
 
 def av_request(params, sleep_before: float = ALPHAVANTAGE_BASE_SLEEP):
     """Hilfsfunktion: API-Aufruf mit bewusst langer Wartezeit."""

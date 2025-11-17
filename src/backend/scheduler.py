@@ -1,12 +1,34 @@
 import time
 from datetime import datetime
 from src.backend.api_services.av_connect import fetch_alphavantage_raw, fetch_alphavantage_price_today
-from src.backend.data_model import tickers
+from src.backend.data_model import initial_tickers, TICKERS
 import streamlit as st
 now = datetime.now().replace(microsecond=0)
 
 
-def load_data():
+def load_data(data: list):
+    st.session_state["load_data_time"] = now
+    status_raw_data = st.empty()
+    status_pricing_data = st.empty()
+    today = datetime.today()
+    print(f"Downloading data at: {today} ")
+    status_raw_data.write("Downloading...")
+
+    for ticker in data:
+        try:
+            fetch_alphavantage_raw(ticker)
+            status_raw_data.write(f"Fetched Raw Data for: {ticker}")
+            fetch_alphavantage_price_today(ticker)
+            status_pricing_data.write(f"Fetched Pricing Data for: {ticker}")
+            print(f"{ticker} added to Database!")
+        except Exception as e:
+            st.error(f"Could not load data for {ticker}")
+
+        time.sleep(60)
+    
+    return f"Updated data at: {today}"
+
+def load_initial_data():
     st.session_state["load_data_time"] = now
     status_raw_data = st.empty()
     status_pricing_data = st.empty()
@@ -14,7 +36,7 @@ def load_data():
     print(f"Loading data at: {today} ")
     status_raw_data.write("Loading...")
 
-    for ticker in tickers:
+    for ticker in initial_tickers:
         try:
             fetch_alphavantage_raw(ticker)
             status_raw_data.write(f"Fetched Raw Data for: {ticker}")
@@ -24,6 +46,6 @@ def load_data():
         except Exception as e:
             print(f"Error: {e}")
 
-        time.sleep(1)
+        time.sleep(60)
     
     return f"Updated data at: {today}"
