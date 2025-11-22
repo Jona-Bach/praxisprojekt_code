@@ -2,12 +2,14 @@ import streamlit as st
 from pathlib import Path
 import requests
 import pandas as pd
-from backend.database.db_functions import get_table_names, delete_table, add_system_config, get_config_dict, delete_system_config, update_system_config
+from backend.database.db_functions import get_table_names, delete_table, add_system_config, get_config_dict, delete_system_config, update_system_config, add_list_system_config, get_list_system_config
 from backend.llm_functions import check_connection
+from backend.data_model import initial_tickers, TICKERS
+from backend.scheduler import load_initial_data
 
 #__________________________Header____________________________
 
-st.set_page_config(page_title="Start", page_icon="⚙️")
+st.set_page_config(page_title="Start", page_icon="🏠")
 #____________________________________________________________
 
 # Ordner der aktuellen Datei (z.B. app.py)
@@ -19,7 +21,11 @@ st.session_state["BASE_DIR"] = BASE_DIR
 img_path_fsbar = BASE_DIR / "assets" / "finsightbar.png"
 img_path_fsold = BASE_DIR / "assets" / "logofinsightold.png"
 
-add_system_config("toggle_button", "test", False)
+toggle_cfg_check = get_config_dict("toggle_button")
+if toggle_cfg_check is None:
+    add_system_config("toggle_button", "test", False)
+else:
+    pass
 
 #__________________________SIDEBAR___________________________
 st.sidebar.subheader("Welcome to FinSight!")
@@ -144,6 +150,58 @@ with tab3:
 
             if st.button("Clear Table"):
                 confirm_delete(choice)
+
+        st.divider()
+        st.subheader("Initial Tickers loading:")
+        st.caption("""Here you can see the selected tickers that are loaded in your Databse in the beginning.
+                   You can change these settings here to load other tickers.""")
+        col1, col2 = st.columns([1,1]) 
+        with col1:
+            if st.button("Load initial Data"):
+                load_initial_data()
+                st.info("Loading initial Data!")
+            st.write("Create new initial Tickers list")
+            system_tickers = sorted(TICKERS)
+            initial_ticker_list = st.multiselect(
+            "Choose from known Ticker",
+            options=system_tickers)
+            custom_initial_ticker = st.text_input("Add custom ticker (comma separated):")
+            custom_tickers = [t.strip().upper() for t in custom_initial_ticker.split(",") if t.strip()]
+            all_tickers = initial_ticker_list + custom_tickers
+            df_own_tickers = pd.DataFrame(all_tickers, columns=["Selected Initial Tickers"])
+            st.dataframe(df_own_tickers, hide_index=True)
+            if st.button("Choose as New Initial Tickers:"):
+                if not all_tickers:
+                    st.error("No tickers selected! Please choose at least one ticker.")
+                else:
+                    add_list_system_config(name="Custom_Initial_Tickers",values=all_tickers, tag=True)
+                    st.success("Initial tickers successfully saved!")
+            if st.button("Delete Custom Initial Tickers:"):
+                try:
+                    delete_system_config("Custom_Initial_Tickers")
+                    st.success("Deleted Initial Ticker config")
+                except:
+                    st.error("No Custom Initial tickers added!")
+
+
+        with col2:
+            with st.expander("Initial Tickers List:"):
+                custom_tickers_cfg = get_list_system_config("Custom_Initial_Tickers")
+                if custom_tickers_cfg is not None:
+                    custom_tickers_cfg_df = pd.DataFrame(custom_tickers_cfg, columns=["Custom Tickers List"])
+                    st.dataframe(custom_tickers_cfg_df, hide_index=True)
+                else:
+                    df_initial_tickers = pd.DataFrame(initial_tickers, columns=["Ticker"])
+                    st.dataframe(df_initial_tickers, hide_index=True)
+
+
+
+
+
+
+
+
+
 
     with st.expander("Assistant Settings"):
         st.header("Assistant Settings:")

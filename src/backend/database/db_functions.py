@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 import pandas as pd
+import json
 import os
 
 def create_av_alchemy_db(folder_name, db_name):
@@ -876,3 +877,113 @@ def update_system_config(name: str, value: str = None, tag: bool = None):
         "Value": entry.Value,
         "Tag": entry.Tag
     }
+
+
+def add_list_system_config(name: str, values: list, tag: bool = False):
+    """
+    Speichert eine Python-Liste als JSON-String in System_Config.Value.
+    Verhält sich ähnlich wie add_system_config, ist aber speziell für Listen.
+    """
+    if not isinstance(values, list):
+        raise TypeError(f"'values' muss eine Liste sein, ist aber: {type(values)}")
+
+    json_value = json.dumps(values)
+
+    new_entry = System_Config(
+        Name=name,
+        Value=json_value,
+        Tag=tag
+    )
+    session_2.add(new_entry)
+    session_2.commit()
+    session_2.refresh(new_entry)
+    return new_entry
+
+
+def get_list_system_config(name: str):
+    """
+    Holt einen System_Config-Eintrag und gibt Value als Python-Liste zurück.
+    Gibt None zurück, wenn nichts gefunden wurde oder Value kein gültiges JSON ist.
+    """
+    entry = get_system_config_by_name(name)
+    if not entry:
+        return None
+
+    try:
+        return json.loads(entry.Value)
+    except json.JSONDecodeError:
+        # war kein JSON (z.B. alter Eintrag) → None zurückgeben oder Value weiterreichen
+        return None
+    
+
+def get_symbols_from_table(database_path: str, table_name: str):
+    """
+    Holt alle eindeutigen Symbole ('symbol') aus einer Tabelle.
+    Gibt IMMER eine Liste zurück – auch wenn die Tabelle leer ist.
+    """
+    engine = create_engine(f"sqlite:///{database_path}")
+    inspector = inspect(engine)
+
+    # Existiert die Tabelle überhaupt?
+    if table_name not in inspector.get_table_names():
+        return []
+
+    try:
+        df = pd.read_sql(f"SELECT symbol FROM {table_name}", engine)
+    except Exception:
+        return []
+
+    if "symbol" not in df.columns:
+        return []
+    
+    return df["symbol"].dropna().unique().tolist()
+
+
+
+def update_list_system_config(name: str, new_values: list, tag: bool = None):
+    """
+    Überschreibt eine bestehende JSON-Liste in System_Config komplett.
+    Falls der Eintrag nicht existiert → None zurück.
+    """
+    entry = get_system_config_by_name(name)
+    if not entry:
+        return None
+    
+    if not isinstance(new_values, list):
+        raise TypeError(f"'new_values' muss eine Liste sein, ist aber {type(new_values)}")
+
+    entry.Value = json.dumps(new_values)
+
+    if tag is not None:
+        entry.Tag = tag
+
+    session_2.commit()
+    session_2.refresh(entry)
+
+    return {
+        "id": entry.id,
+        "Name": entry.Name,
+        "Value": json.loads(entry.Value),
+        "Tag": entry.Tag
+    }
+
+
+def append_to_list_system_config(name: str, items):
+    """
+    Fügt einer JSON-Liste neue Einträge hinzu. 
+    'items' kann Liste oder einzelner Wert sein.
+    Keine Duplikate.
+    """
+    if not isinstance(items, list):
+        items = [items]  # einzelne Strings in Liste packen
+
+    # existierende Liste holen
+    current = get_list_system_config(name)
+    if current is None:
+        return None  # oder automatisch anlegen?
+
+    # neue Werte hinzufügen, ohne Duplikate
+    updated = list(set(current + items))
+
+    # speichern
+    return update_list_system_config(name, updated)

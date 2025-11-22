@@ -1,8 +1,9 @@
 import streamlit as st
 from pathlib import Path
+from datetime import datetime
 from backend.data_model import TICKERS
 from backend.scheduler import load_data, load_initial_data
-from backend.database.db_functions import get_table, get_table_names
+from backend.database.db_functions import get_table, get_table_names, get_symbols_from_table
 # Ordner der aktuellen Datei (z.B. app.py)
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -27,8 +28,15 @@ else:
 st.sidebar.info(f"Last data update: {loaded_data_ts}")
 if st.sidebar.button("Update Data"):
     with st.spinner("Updating data (this might take a while...)"):
-        answer = load_initial_data()
+        database_path = "data/alphavantage.db"
+        av_raw_data_symbols = get_symbols_from_table(database_path=database_path, table_name="alphavantage_raw_kpi")
+        av_pricing_symbols = get_symbols_from_table(database_path=database_path, table_name="alphavantage_daily_pricing")
+        all_tickers_to_update = av_raw_data_symbols + av_pricing_symbols
+        unique_list = sorted(list(set(all_tickers_to_update)))
+        answer = load_data(unique_list)
         st.success(answer)
+    updated_time = datetime.now().replace(microsecond=0)
+    st.success(f"Updated Data at:{updated_time}!")
 
 
 t_choice = st.sidebar.multiselect(
