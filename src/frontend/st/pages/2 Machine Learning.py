@@ -17,6 +17,3 @@ if "assistant_base_url" in st.session_state:
 if "test" in st.session_state:
     base_url = st.session_state["test"]
     st.write(base_url)
-
-if st.button("Press me"):
-    process_alphavantage_raw_db()

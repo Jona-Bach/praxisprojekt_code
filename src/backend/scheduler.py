@@ -29,6 +29,7 @@ def load_data(data: list):
 
         time.sleep(30)
     
+    process_alphavantage_raw_db()
     return f"Updated data at: {today}"
 
 def load_initial_data():
@@ -58,4 +59,5 @@ def load_initial_data():
 
         time.sleep(30)
     
+    process_alphavantage_raw_db()
     return f"Updated data at: {today}"

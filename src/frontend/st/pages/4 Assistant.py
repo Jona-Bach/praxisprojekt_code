@@ -25,7 +25,7 @@ st.set_page_config(page_title="Digital Assistant", page_icon="💬")
 
 #__________________________SIDEBAR___________________________
 st.sidebar.subheader("Digital Assistant")
-st.sidebar.image(str(img_path_fsbar))
+#st.sidebar.image(str(img_path_fsbar))
 st.sidebar.divider()
 if st.sidebar.button("Chat zurücksetzen"):
     st.session_state.messages = []

@@ -29,7 +29,7 @@ else:
 
 #__________________________SIDEBAR___________________________
 st.sidebar.subheader("Settings")
-st.sidebar.image(str(img_path_fsbar))
+#st.sidebar.image(str(img_path_fsbar))
 st.sidebar.divider()
 #____________________________________________________________
 
