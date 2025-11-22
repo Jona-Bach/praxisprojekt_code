@@ -2,7 +2,7 @@ import streamlit as st
 from pathlib import Path
 import requests
 import pandas as pd
-from backend.database.db_functions import get_table_names, delete_table, add_system_config, get_config_dict, delete_system_config, update_system_config, add_list_system_config, get_list_system_config
+from backend.database.db_functions import get_table_names, delete_table, add_system_config, get_config_dict, delete_system_config, update_system_config, add_list_system_config, get_list_system_config, append_to_list_system_config
 from backend.llm_functions import check_connection
 from backend.data_model import initial_tickers, TICKERS
 from backend.scheduler import load_initial_data
@@ -33,7 +33,8 @@ st.sidebar.image(str(img_path_fsbar))
 st.sidebar.divider()
 #____________________________________________________________
 
-
+st.header("Settings")
+st.divider()
 
 
 with st.expander("Global Settings"):
@@ -139,15 +140,25 @@ with st.expander("Data Settings"):
         options=system_tickers)
         custom_initial_ticker = st.text_input("Add custom ticker (comma separated):")
         custom_tickers = [t.strip().upper() for t in custom_initial_ticker.split(",") if t.strip()]
-        all_tickers = initial_ticker_list + custom_tickers
+        #all_tickers = initial_ticker_list + custom_tickers
+        all_tickers = list(set(initial_ticker_list + custom_tickers))
         df_own_tickers = pd.DataFrame(all_tickers, columns=["Selected Initial Tickers"])
         st.dataframe(df_own_tickers, hide_index=True)
         if st.button("Choose as New Initial Tickers:"):
             if not all_tickers:
                 st.error("No tickers selected! Please choose at least one ticker.")
             else:
+                try:
+                    delete_system_config("Custom_Initial_Tickers")
+                except:
+                    pass
                 add_list_system_config(name="Custom_Initial_Tickers",values=all_tickers, tag=True)
                 st.success("Initial tickers successfully saved!")
+        if st.button("Add to Initial Tickers"):
+            append_to_list_system_config("Custom_Initial_Tickers", items=all_tickers)
+            st.success("Initial tickers successfully added!")
+
+
         if st.button("Delete Custom Initial Tickers:"):
             try:
                 delete_system_config("Custom_Initial_Tickers")
