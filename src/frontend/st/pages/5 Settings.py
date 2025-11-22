@@ -6,6 +6,8 @@ from backend.database.db_functions import get_table_names, delete_table, add_sys
 from backend.llm_functions import check_connection
 from backend.data_model import initial_tickers, TICKERS
 from backend.scheduler import load_initial_data
+from backend.database.users_database import list_user_tables
+from backend.database.database_utils import delete_any_table
 
 #__________________________Header____________________________
 
@@ -99,7 +101,9 @@ with st.expander("Data Settings"):
             st.session_state.tables = df_tables["table_name"].tolist()
             st.session_state.reload_tables = False
 
-        tables = st.session_state.tables
+        tables_system = st.session_state.tables
+        users_tables = list(list_user_tables())
+        tables = tables_system + users_tables
 
         # Kein Ergebnis?
         if len(tables) == 0:
@@ -117,9 +121,12 @@ with st.expander("Data Settings"):
 
             with col1:
                 if st.button("Yes, clear", type="primary"):
-                    msg = delete_table(database_path, table_name)
-                    st.success(f"{table_name} deleted!")
-                    st.session_state["_refresh"] = True
+                    try:
+                        msg = delete_any_table(table_name=table_name, system_db_path=database_path)
+                        st.success(f"{table_name} deleted!")
+                        st.session_state["_refresh"] = True
+                    except Exception as e:
+                        st.error(str(e))
 
             with col2:
                 if st.button("Cancel"):

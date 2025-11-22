@@ -90,3 +90,35 @@ def get_user_table(table_name: str) -> pd.DataFrame:
     query = f"SELECT * FROM {safe_name}"
     df = pd.read_sql(query, engine)
     return df
+
+from sqlalchemy import inspect, text
+
+def delete_user_table(table_name: str):
+    """
+    Deletes a table from the users_database by its name.
+
+    Parameters
+    ----------
+    table_name : str
+        Name of the table to delete.
+    """
+
+    inspector = inspect(engine)
+    tables = inspector.get_table_names()
+
+    # Check if table exists
+    if table_name not in tables:
+        raise ValueError(f"Table '{table_name}' does not exist in users_database.")
+
+    # Protect table name (SQLite allows quoted identifiers)
+    safe_name = f'"{table_name}"'
+
+    # Execute DROP TABLE
+    try:
+        with engine.connect() as conn:
+            conn.execute(text(f"DROP TABLE {safe_name}"))
+            conn.commit()
+        return f"Table '{table_name}' has been deleted successfully."
+
+    except Exception as e:
+        raise RuntimeError(f"Error deleting table '{table_name}': {e}")

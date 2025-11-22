@@ -1045,3 +1045,4 @@ def remove_from_list_system_config(name: str, items):
 
     # Liste updaten
     return update_list_system_config(name, updated)
+
