@@ -431,3 +431,10 @@ build
 Dockerfile*
 docker-compose*.yml
 *.DS_Store
+
+
+#Datenbanken extrahieren:
+data/*.db 
+*.db
+
+ 
