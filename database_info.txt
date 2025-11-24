@@ -1,0 +1,13 @@
+alphavantage.db -> alphavantage_daily_pricing = Wird durch Initial tickers also die TICKERS Liste geladen
+alphavantage.db -> alphavantage_raw_kpi = Wird durch Initial tickers also die TICKERS Liste geladen
+
+alphavantage_processed.db -> alphavantage_pricing_processed = Wird durch alphavantage_daily_pricing erzeugt
+alphavantage_processed.db -> alphavantage_processed_kpi = Wird durch alphavantage_raw_kpi erzeugt
+
+system_config.db -> Wird durch funktionen im ST benutzt
+
+users_database.db -> Wird erstellt wenn ein Nutzer eigene Datenbanken anlegt
+
+yfinance.db -> yf_company_info = Wurde durch die symboler der TICKERS Liste erzeugt (download_yf_company_info)
+yfinance.db -> yf_price_history = Wurde durch symbole (initial tickers) der TICKERS Liste erzeugt (download_price_history)
+yfinance.db -> yf_pricing_raw = Soll durch einzelne Ticker die yf_price_history ERGÄNZEN (download_yf_pricing_raw)

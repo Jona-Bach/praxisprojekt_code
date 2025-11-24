@@ -6,9 +6,10 @@ from datetime import datetime
 import plotly.graph_objects as go
 from backend.data_model import TICKERS
 from backend.scheduler import load_data, load_initial_data
-from backend.database.db_functions import get_table, get_table_names, get_symbols_from_table, get_unique_table, get_yf_company_info, get_yf_price_history
-from backend.data_processing.alphavantage_processed import get_processed_table, process_alphavantage_raw_db, get_processed_entries_by_symbol
+from backend.database.db_functions import get_table, get_table_names, get_symbols_from_table, get_unique_table, get_yf_company_info, get_yf_price_history, get_yf_pricing_raw, get_config_dict
+from backend.data_processing.alphavantage_processed import get_processed_table, process_alphavantage_raw_db, get_processed_entries_by_symbol, get_unique_symbols_from_table
 from backend.database.users_database import import_file_as_table, get_user_table, list_user_tables
+from backend.api_services.yf_connect import download_yf_company_info, download_yf_pricing_raw_newest, download_yf_pricing_raw_timeperiod
 import openpyxl
 # Ordner der aktuellen Datei (z.B. app.py)
 BASE_DIR = Path(__file__).resolve().parent
@@ -23,9 +24,13 @@ st.set_page_config(page_title="Data", page_icon="🔍")
 tab1, tab2 = st.tabs(["Analysis","Data Settings"])
 database_path_yf = "data/yfinance.db"
 
-# --------------------------------------
-# Card-Style CSS (einmal am Anfang der App)
-# --------------------------------------
+selected_date_cfg = get_config_dict("selected_date_for_ticker_download")
+
+if selected_date_cfg and "Value" in selected_date_cfg:
+    timeperiod_for_download = selected_date_cfg["Value"]
+else:
+    timeperiod_for_download = "2020-01-01"
+
 CARD_STYLE = """
 <style>
 .info-card {
@@ -158,6 +163,26 @@ def format_date_string(date_str):
 
     return dt.strftime("%d %b %Y")  # z. B. "21 Jan 2025"
 
+
+symbols_yf_history = get_symbols_from_table(database_path=database_path_yf, table_name="yf_price_history")
+symbols_yf_company_info = get_symbols_from_table(database_path=database_path_yf, table_name="yf_company_info")
+symbols_av_processed = get_unique_symbols_from_table(table_name="alphavantage_processed_kpi")
+
+combined_symbols = list(
+set(symbols_yf_history + symbols_yf_company_info + symbols_av_processed)
+)
+
+combined_symbols = sorted(combined_symbols)
+
+common_symbols = list(
+    set(symbols_yf_history)
+    & set(symbols_yf_company_info)
+    & set(symbols_av_processed)
+)
+
+common_symbols = sorted(common_symbols)
+
+
 #__________________________SIDEBAR___________________________
 st.sidebar.subheader("Data")
 #st.sidebar.image(str(img_path_fsbar))
@@ -173,14 +198,15 @@ else:
 st.sidebar.subheader("Options:")
 
 st.sidebar.info(f"Last data update: {loaded_data_ts}")
-if st.sidebar.button("Update Data"):
+if st.sidebar.button("Update All Data"):
     with st.spinner("Updating data (this might take a while...)"):
-        database_path = "data/alphavantage.db"
-        av_raw_data_symbols = get_symbols_from_table(database_path=database_path, table_name="alphavantage_raw_kpi")
-        av_pricing_symbols = get_symbols_from_table(database_path=database_path, table_name="alphavantage_daily_pricing")
-        all_tickers_to_update = av_raw_data_symbols + av_pricing_symbols
-        unique_list = sorted(list(set(all_tickers_to_update)))
-        answer = load_data(unique_list)
+        # database_path = "data/alphavantage.db"
+        # av_raw_data_symbols = get_symbols_from_table(database_path=database_path, table_name="alphavantage_raw_kpi")
+        # av_pricing_symbols = get_symbols_from_table(database_path=database_path, table_name="alphavantage_daily_pricing")
+        all_tickers_to_update = combined_symbols
+        answer = load_data(all_tickers_to_update)
+        download_yf_pricing_raw_newest(all_tickers_to_update)
+        download_yf_company_info(all_tickers_to_update)
         st.success(answer)
     updated_time = datetime.now().replace(microsecond=0)
     st.success(f"Updated Data at:{updated_time}!")
@@ -191,14 +217,38 @@ if st.sidebar.button("Update Processed Data"):
 
 t_choice = st.sidebar.multiselect(
     "Choose Ticker",
-    options=sorted(TICKERS))
+    options=combined_symbols)
 
 st.session_state["chosen_tickers"] = t_choice
 
+if st.sidebar.button("Update Single Ticker Data"):
+    with st.spinner("Adding data (this might take a while...)"):
+        answer = load_data(t_choice)
+        download_yf_pricing_raw_newest(t_choice)
+        st.success(answer)
+    st.success("Download Complete!")
+
+
+
+t_choice_download = st.sidebar.text_input("Search Stock", placeholder="Type in Stock Symbol", 
+                                          help="""Choose Ticker to download. 
+                                          The Ticker Data will be downloaded for 5 Years max. 
+                                          If you want to change this change it in the Settings""")
+
+st.session_state["chosen_tickers_to_download"] = t_choice_download
+
 if st.sidebar.button("Download Ticker Data"):
     with st.spinner("Downloading data (this might take a while...)"):
-        answer = load_data(t_choice)
-        st.success(answer)
+        try:
+            t_choice_download_load = [t_choice_download]
+            answer = load_data(t_choice_download_load)
+            download_yf_company_info(t_choice_download_load)
+            download_yf_pricing_raw_timeperiod(t_choice_download_load, startdate=timeperiod_for_download, enddate="2025-01-01")
+            if t_choice_download and t_choice_download not in TICKERS:
+                TICKERS.append(t_choice_download)
+            st.success(answer)
+        except Exception as e:
+            st.error(f"Could not add Ticker: {e}")
     st.success("Download Complete!")
 
 
@@ -281,7 +331,7 @@ with tab1:
         #st.subheader("Basic Analysis")
         ticker_to_analyze = st.selectbox(
             label="Choose Stock to Analyze",
-            options=TICKERS
+            options=combined_symbols
         )
         stock_info = get_yf_company_info(ticker_to_analyze) # STOCK INFOOOO
         col1, col2, col3 = st.columns(3)
@@ -358,6 +408,9 @@ with tab1:
         def plot_price_history(ticker: str):
             # Pricing-Daten laden
             pricing_ticker_data = get_yf_price_history(ticker)
+
+            if pricing_ticker_data.empty:
+                pricing_ticker_data = get_yf_pricing_raw(ticker)
 
             if pricing_ticker_data.empty:
                 st.warning(f"Keine Preisdaten für {ticker} gefunden.")

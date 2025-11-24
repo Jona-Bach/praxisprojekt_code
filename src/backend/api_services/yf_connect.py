@@ -9,15 +9,62 @@ from backend.data_model import TICKERS
 stock_list = TICKERS
 all_data = {}
 
-def download_yf_pricing_raw(tickers_to_download :list, startdate : str, enddate : str, interval : str):
+def download_yf_pricing_raw_timeperiod(tickers_to_download :list, startdate : str = "2024-01-01", enddate : str = "2025-01-01", interval_p : str = "1d"):
     for t in tickers_to_download:
         print(f"Lade Daten für {t} ...")
 
         df = yf.download(
             t, 
-            start="2024-01-01",
-            end="2025-01-01",
-            interval="1d",
+            start=startdate,
+            end=enddate,
+            interval=interval_p,
+            auto_adjust=False,
+            group_by="column",
+        )
+
+        all_data[t] = df
+
+        if not df.empty:
+            # MultiIndex-Spalten abflachen
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
+
+            df = df.reset_index()
+
+            df = df.rename(columns={
+                "Date": "date",
+                "Open": "open",
+                "High": "high",
+                "Low": "low",
+                "Close": "close",
+                "Volume": "volume",
+            })
+
+            print("Spalten nach Umbenennen:", df.columns)
+
+            for _, row in df.iterrows():
+                create_yf_pricing_entry(
+                    symbol=t,
+                    date=row["date"],
+                    open=row["open"] if pd.notna(row["open"]) else None,
+                    high=row["high"] if pd.notna(row["high"]) else None,
+                    low=row["low"] if pd.notna(row["low"]) else None,
+                    close=row["close"] if pd.notna(row["close"]) else None,
+                    volume=row["volume"] if pd.notna(row["volume"]) else None,
+                )
+
+        time.sleep(30)
+
+    print("\nFertig! Daten geladen und in DB gespeichert.\n")
+
+def download_yf_pricing_raw_newest(tickers_to_download :list, interval_p : str = "1d", period_p : str = "1d"):
+    for t in tickers_to_download:
+        print(f"Lade Daten für {t} ...")
+
+        df = yf.download(
+            t, 
+            interval=interval_p,
+            period=period_p,
             auto_adjust=False,
             group_by="column",
         )

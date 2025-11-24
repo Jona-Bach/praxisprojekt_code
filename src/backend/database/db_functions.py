@@ -1365,6 +1365,38 @@ def get_yf_price_history(symbol: str):
     )
 
     if not results:
+        #print(f"⚠️ Keine Pricing-history-Daten für Symbol {symbol} gefunden.")
+        return pd.DataFrame()
+
+    # SQLAlchemy-Objekte → Dicts
+    data_list = [
+        {c.name: getattr(row, c.name) for c in row.__table__.columns}
+        for row in results
+    ]
+
+    df = pd.DataFrame(data_list)
+
+    # Nach Datum sortieren (wichtig!)
+    if "date" in df.columns:
+        df = df.sort_values("date").reset_index(drop=True)
+
+    return df
+
+
+def get_yf_pricing_raw(symbol: str):
+    """
+    Lädt die gesamten Preis-Historie-Daten aus der Tabelle YF_PRICING_RAW
+    für ein bestimmtes Symbol als Pandas DataFrame.
+    """
+
+    # Query: alle passenden Datensätze holen
+    results = (
+    session_yf.query(YF_PRICING_RAW)
+    .filter(YF_PRICING_RAW.symbol == symbol.strip().upper())
+    .all()
+    )   
+
+    if not results:
         print(f"⚠️ Keine Pricing-Daten für Symbol {symbol} gefunden.")
         return pd.DataFrame()
 

@@ -138,73 +138,101 @@ with st.expander("Data Settings"):
 
     st.divider()
     st.subheader("Initial Tickers loading:")
-    st.caption("""Here you can see the selected tickers that are loaded in your Databse in the beginning.
-                You can change these settings here to load other tickers.""")
-    col1, col2 = st.columns([1,1]) 
-    with col1:
-        if st.button("Load initial Data"):
-            with st.spinner("Loading Initial Ticker Data"):
-                load_initial_data()
-        st.divider()
-        st.write("Create new initial Tickers list")
-        system_tickers = sorted(TICKERS)
-        initial_ticker_list = st.multiselect(
-        "Choose from known Ticker",
-        options=system_tickers)
-        custom_initial_ticker = st.text_input("Add custom ticker (comma separated):")
-        custom_tickers = [t.strip().upper() for t in custom_initial_ticker.split(",") if t.strip()]
-        #all_tickers = initial_ticker_list + custom_tickers
-        all_selected_tickers = list(set(initial_ticker_list + custom_tickers))
-        df_own_tickers = pd.DataFrame(all_selected_tickers, columns=["Selected Initial Tickers"])
-        st.dataframe(df_own_tickers, hide_index=True)
-        if st.button("Choose as New Initial Tickers:"):
-            if not all_selected_tickers:
-                st.error("No tickers selected! Please choose at least one ticker.")
-            else:
+    with st.container():
+        st.caption("""Here you can see the selected tickers that are loaded in your Databse in the beginning.
+                    You can change these settings here to load other tickers.""")
+        col1, col2 = st.columns([1,1]) 
+        with col1:
+            if st.button("Load initial Data"):
+                with st.spinner("Loading Initial Ticker Data"):
+                    load_initial_data()
+            st.divider()
+            st.write("Create new initial Tickers list")
+            system_tickers = sorted(TICKERS)
+            initial_ticker_list = st.multiselect(
+            "Choose from known Ticker",
+            options=system_tickers)
+            custom_initial_ticker = st.text_input("Add custom ticker (comma separated):")
+            custom_tickers = [t.strip().upper() for t in custom_initial_ticker.split(",") if t.strip()]
+            #all_tickers = initial_ticker_list + custom_tickers
+            all_selected_tickers = list(set(initial_ticker_list + custom_tickers))
+            df_own_tickers = pd.DataFrame(all_selected_tickers, columns=["Selected Initial Tickers"])
+            st.dataframe(df_own_tickers, hide_index=True)
+            if st.button("Choose as New Initial Tickers:"):
+                if not all_selected_tickers:
+                    st.error("No tickers selected! Please choose at least one ticker.")
+                else:
+                    try:
+                        delete_system_config("Custom_Initial_Tickers")
+                    except:
+                        pass
+                    add_list_system_config(name="Custom_Initial_Tickers",values=all_selected_tickers, tag=True)
+                    st.success("Initial tickers successfully saved!")
+            if st.button("Add to Initial Tickers"):
+                append_to_list_system_config("Custom_Initial_Tickers", items=all_selected_tickers)
+                st.success("Initial tickers successfully added!")
+
+            if st.button("Remove Selected Ticker from Initial Tickers"):
+                try:
+                    remove_from_list_system_config("Custom_Initial_Tickers", items=all_selected_tickers)
+                    st.success("Removed Ticker from Custom Ticker List")
+                except:
+                    st.error("Could not remove Ticker")
+
+
+            if st.button("Delete Custom Initial Tickers:"):
                 try:
                     delete_system_config("Custom_Initial_Tickers")
+                    st.success("Deleted Initial Ticker config")
                 except:
-                    pass
-                add_list_system_config(name="Custom_Initial_Tickers",values=all_selected_tickers, tag=True)
-                st.success("Initial tickers successfully saved!")
-        if st.button("Add to Initial Tickers"):
-            append_to_list_system_config("Custom_Initial_Tickers", items=all_selected_tickers)
-            st.success("Initial tickers successfully added!")
+                    st.error("No Custom Initial tickers added!")
 
-        if st.button("Remove Selected Ticker from Initial Tickers"):
-            try:
-                remove_from_list_system_config("Custom_Initial_Tickers", items=all_selected_tickers)
-                st.success("Removed Ticker from Custom Ticker List")
-            except:
-                st.error("Could not remove Ticker")
+            st.divider()
 
 
-        if st.button("Delete Custom Initial Tickers:"):
-            try:
-                delete_system_config("Custom_Initial_Tickers")
-                st.success("Deleted Initial Ticker config")
-            except:
-                st.error("No Custom Initial tickers added!")
-
-        st.divider()
-
-
-    with col2:
-        with st.expander("Initial Tickers List:"):
-            custom_tickers_cfg = get_list_system_config("Custom_Initial_Tickers")
-            if custom_tickers_cfg is not None:
-                custom_tickers_cfg_df = pd.DataFrame(custom_tickers_cfg, columns=["Custom Tickers List"])
-                st.dataframe(custom_tickers_cfg_df, hide_index=True)
-            else:
-                df_initial_tickers = pd.DataFrame(TICKERS, columns=["System Ticker List"])
-                st.dataframe(df_initial_tickers, hide_index=True)
+        with col2:
+            with st.expander("Initial Tickers List:"):
+                custom_tickers_cfg = get_list_system_config("Custom_Initial_Tickers")
+                if custom_tickers_cfg is not None:
+                    custom_tickers_cfg_df = pd.DataFrame(custom_tickers_cfg, columns=["Custom Tickers List"])
+                    st.dataframe(custom_tickers_cfg_df, hide_index=True)
+                else:
+                    df_initial_tickers = pd.DataFrame(TICKERS, columns=["System Ticker List"])
+                    st.dataframe(df_initial_tickers, hide_index=True)
 
 
+    st.divider()
+    st.subheader("Analysis Settings")
+    with st.container():
+        st.caption("""Select the earliest Date that the download will use for the new Ticker download!""")
 
+        picked_date = st.date_input("Choose a date")
+        date_str = picked_date.strftime("%Y-%m-%d")
 
+        selected_date_cfg = get_config_dict("selected_date_for_ticker_download")
+        st.write("Selected date:", date_str)
 
+        if selected_date_cfg and "Value" in selected_date_cfg:
+            current_stored_date = selected_date_cfg["Value"]
+            st.write("Current date:", current_stored_date)
+        else:
+            st.write("Current date: 2020-01-01")
 
+        col1, col2 = st.columns(2)
 
+        with col1:
+            if st.button("Save new Date!"):
+                st.warning("You have changed the Date which is used for new ticker Downloads")
+                delete_system_config("selected_date_for_ticker_download")
+                add_system_config("selected_date_for_ticker_download", value=date_str, tag=False)
+                st.success(f"{picked_date} was successfully added as new Date")
+        with col2:
+            if st.button("Reset Date Config"):
+                try:
+                    delete_system_config("selected_date_for_ticker_download")
+                except:
+                    st.error(f"Couln't delete the config! {e} ")
+                st.success("Date Config Reseted!")
 
 
 

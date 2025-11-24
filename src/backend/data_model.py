@@ -491,7 +491,10 @@ TICKERS = [
     "IPG",     # 415
     "BJ",      # 416
     "TTEK",    # 417
-    "COHR",    # 418
+    "COHR",    # 418 # AB HIER NUR NOCH HINZUGEFÜGTE:
+
+
+    # AB HIER NUR NOCH HINZUGEFÜGTE:
 
 
 ]

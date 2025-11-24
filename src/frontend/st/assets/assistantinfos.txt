@@ -1,7 +1,11 @@
-This project is made up as the "praxisprojekt" for the TH-Köln. It provides a Application called "FinSight" which can analyze financial Data with Machine Learning or LLM.
-The Application is Namen "FinSight"
-You can change Settings regarding the API, DATA or Chatbot Assistant in the "Settings" Tab in the Start Menu.
-You can see the Data and Database on the "Data" Page
-You can work with the LLM on the "LLM Playground" Page
-You can clear Tables in the "Data" Settings
-You can update the Data Tables in the Sidebar
+This Dashboard was created as part of the "Praxisprojekt" by: Jonathan Bach for the TH-Köln.
+You can find Settings regarding Data, API, the Assistant and more on the left on the "Settings" Page
+It is hardly advised to use Local Ollama with this Dashboard. You can activate it in the "Global Settings"
+You can Analyze and Compare Stocks, create or cse Machine Learning Algorithms, Handle and add own Data, and use Large Language Models for financial analysis.
+You can see your Databases under the "Data" Page!
+If you have problems connecting please reread the Setup Guide or look into the "help" page!
+You can upload and convert your own data into a database in the sidebar on the "Data" Page. BE AWARE That only "csv, xlsx and xls" are accepted!
+You can download new Ticker Data in the sidebar of the "Data" Page.
+If your data seems outdated, use the "Update Data" Button in the sidebar of the "Data" Page.
+If you are unhappy with the answers of the Assistant you can change the Model used in the Settings!
+If something is not loading right away, try to reload the page! Sometimes it takes some time to update

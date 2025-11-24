@@ -13,13 +13,12 @@ else:
     img_path_fsbar = BASE_DIR / "assets_safety" / "finsightbar.png"
     img_path_fsold = BASE_DIR / "assets_safety" / "logofinsightold.png"
 
+model = None 
+
 if "model" in st.session_state:
     model = st.session_state["model"]
-elif "model" not in st.session_state:
-    config_model = get_config_dict("assistant_model_choice")
-    if config_model is not None:
-        model = config_model["Value"]
-else:
+
+elif model is None:
     model = "phi3:mini"
 
 

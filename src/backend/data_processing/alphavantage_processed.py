@@ -1193,3 +1193,39 @@ def get_processed_entries_by_symbol(table_name: str, symbol: str):
     df_symbol = df[df["symbol"] == symbol].copy()
 
     return df_symbol
+
+def get_unique_symbols_from_table(table_name: str):
+    """
+    Gibt alle einzigartigen Symbole ('symbol') aus einer SQL-Tabelle zurück.
+
+    Parameters
+    ----------
+    table_name : str
+        Name der SQL-Tabelle, z.B. 'alphavantage_processed_kpi'.
+
+    Returns
+    -------
+    list
+        Liste von einzigartigen Symbolen.
+    """
+
+    inspector = inspect(engine)
+
+    # Existenz prüfen
+    if table_name not in inspector.get_table_names():
+        raise ValueError(f"Table '{table_name}' does not exist in the database.")
+
+    # Tabelle laden
+    try:
+        df = pd.read_sql(f"SELECT symbol FROM {table_name}", engine)
+    except Exception as e:
+        raise RuntimeError(f"Could not load table '{table_name}': {e}")
+
+    # Spalte prüfen
+    if "symbol" not in df.columns:
+        raise ValueError(f"Table '{table_name}' does not contain a 'symbol' column.")
+
+    # EINZIGARTIGEN Werte extrahieren
+    unique_symbols = df["symbol"].dropna().unique().tolist()
+
+    return unique_symbols
