@@ -256,7 +256,7 @@ with st.expander("Assistant Settings"):
                     st.error(e)
 
     elif toggle_cfg["Tag"] == True:
-        pass
+        st.warning("Local Ollama is activated!")
 
     else:
         

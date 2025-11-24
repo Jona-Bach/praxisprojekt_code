@@ -222,5 +222,3 @@ def download_yf_company_info(
             time.sleep(sleep_time)
 
     print("\n✅ Fertig! Alle Unternehmensinformationen verarbeitet.\n")
-
-download_yf_company_info(tickers=stock_list)
