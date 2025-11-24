@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from pathlib import Path
+from backend.database.db_functions import get_config_dict
 
 if "BASE_DIR" in st.session_state:
     BASE_DIR = st.session_state["BASE_DIR"]
@@ -14,6 +15,10 @@ else:
 
 if "model" in st.session_state:
     model = st.session_state["model"]
+elif "model" not in st.session_state:
+    config_model = get_config_dict("assistant_model_choice")
+    if config_model is not None:
+        model = config_model["Value"]
 else:
     model = "phi3:mini"
 

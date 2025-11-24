@@ -73,6 +73,7 @@ initial_tickers = [
     "NFLX"    # Netflix
 ]
 
+
 TICKERS = [
     "NVDA",   # 1
     "OPEN",   # 2

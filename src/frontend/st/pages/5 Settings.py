@@ -313,7 +313,7 @@ with st.expander("Assistant Settings"):
         df = pd.DataFrame({
         "Model": [
             "phi3:mini",
-            "llama3",
+            "llama3.1:8b",
             "llama3.2:3b",
             "mistral",
             "qwen2",
@@ -346,29 +346,44 @@ with st.expander("Assistant Settings"):
     installed_models = get_installed_models(BASE_URL)
 
     # 2. Vorschlagsmodelle (z. B. beliebte)
-    suggested_models = [
-        "phi3:mini",
-        "llama3",
-        "llama3.2:3b",
-        "mistral",
-        "qwen2",
-        "phi4",
-        "codellama:7b",
-    ]
+    suggested_models = {
+        "phi3:mini" : 0,
+        "llama3.1:8b" : 1,
+        "llama3.2:3b":2,
+        "mistral":3,
+        "qwen2":4,
+        "phi4":5,
+        "codellama:7b" : 6,
+    }
+
+    saved_idx = get_config_dict("assistant_model_choice_index")
+    if saved_idx is not None:
+        idx = int(saved_idx["Value"])
+    else:
+        idx = 0
 
     # 3. Auswahl + Eingabe
     selected_model = st.selectbox(
         "Choose a model to manage:",
-        options=suggested_models,
-        key="model_choice",
+        options=suggested_models.keys(),
+        #key="assistant_model_choice_selected",
+        index=idx
     )
 
     custom_model = st.text_input("Or enter a custom model:", key="custom_model")
 
-    # aktive Auswahl = custom first
-    active_model = custom_model.strip() if custom_model.strip() else selected_model
-    st.session_state["model"] = active_model
+    if custom_model.strip():
+        active_model = custom_model.strip()
+    elif selected_model:
+        active_model = selected_model
+        delete_system_config("assistant_model_choice_index")
+        index_new = str(suggested_models[selected_model])
+        add_system_config(name="assistant_model_choice_index", value=index_new, tag=False)
+    else:
+        active_model = "phi3:mini"
 
+
+    st.session_state["model"] = active_model
     st.write(f"Selected Model: **{active_model}**")
 
     # 4. Download-Button
