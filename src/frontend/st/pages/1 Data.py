@@ -22,6 +22,123 @@ st.set_page_config(page_title="Data", page_icon="🔍")
 tab1, tab2 = st.tabs(["Analysis","Data Settings"])
 database_path_yf = "data/yfinance.db"
 
+# --------------------------------------
+# Card-Style CSS (einmal am Anfang der App)
+# --------------------------------------
+CARD_STYLE = """
+<style>
+.info-card {
+    background-color: #1f2937;
+    padding: 1rem 1.2rem;
+    border-radius: 0.8rem;
+    border: 1px solid #374151;
+    margin-bottom: 1rem;
+}
+.info-title {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-bottom: 0.3rem;
+}
+.info-value {
+    font-size: 1.0rem;
+    font-weight: 600;
+    color: #f9fafb;
+    overflow-wrap: break-word;
+}
+</style>
+"""
+st.markdown(CARD_STYLE, unsafe_allow_html=True)
+
+
+def info_card(title, value):
+    value = value if value else "—"
+    return f"""
+    <div class="info-card">
+        <div class="info-title">{title}</div>
+        <div class="info-value">{value}</div>
+    </div>
+    """
+
+def format_number(value):
+    if value is None:
+        return "—"
+
+    # String → Float umwandeln
+    if isinstance(value, str):
+        value = value.replace(".", "").replace(",", "")
+        try:
+            value = float(value)
+        except:
+            return "—"
+
+    abs_val = abs(value)
+
+    # Billiarden (10^15)
+    if abs_val >= 1_000_000_000_000_000:
+        return f"{value / 1_000_000_000_000_000:.2f} Bil"
+
+    # Billionen (10^12)
+    elif abs_val >= 1_000_000_000_000:
+        return f"{value / 1_000_000_000_000:.2f} Bio."
+
+    # Milliarden (10^9)
+    elif abs_val >= 1_000_000_000:
+        return f"{value / 1_000_000_000:.2f} Mrd."
+
+    # Millionen (10^6)
+    elif abs_val >= 1_000_000:
+        return f"{value / 1_000_000:.2f} Mio."
+
+    # Tausend
+    elif abs_val >= 1_000:
+        return f"{value / 1_000:.2f} Tsd."
+
+    # Normale Zahl
+    else:
+        return f"{value:.2f}"
+
+def format_number_en(value):
+    """
+    Format number using English short scale:
+    - T (Trillion)
+    - B (Billion)
+    - M (Million)
+    - K (Thousand)
+
+    Always 2 decimals, automatically converts strings, adds $ sign.
+    """
+    if value is None:
+        return "—"
+
+    # Convert strings to float
+    if isinstance(value, str):
+        try:
+            value = float(value.replace(",", "").replace(" ", ""))
+        except:
+            return "—"
+
+    abs_val = abs(value)
+
+    # Trillion (10^12)
+    if abs_val >= 1_000_000_000_000:
+        return f"$ {value / 1_000_000_000_000:.2f} Trillion"
+
+    # Billion (10^9)
+    elif abs_val >= 1_000_000_000:
+        return f"$ {value / 1_000_000_000:.2f} Billion"
+
+    # Million (10^6)
+    elif abs_val >= 1_000_000:
+        return f"$ {value / 1_000_000:.2f} Million"
+
+    # Thousand (10^3)
+    elif abs_val >= 1_000:
+        return f"$ {value / 1_000:.2f} Thousand"
+
+    # Normal number
+    else:
+        return f"$ {value:.2f}"
+
 
 #__________________________SIDEBAR___________________________
 st.sidebar.subheader("Data")
@@ -131,23 +248,90 @@ if st.sidebar.button("Import file into database"):
 
 
 
+
+
+
+
 #___________________________Data Tab_________________________________
 
 
 with tab1:
 
-    st.header("Market Analysis")
+    st.header("Stock Analysis")
     st.divider()
 
     with st.container():
-        st.subheader("Ticker Analysis")
+        st.subheader("Basic Analysis")
         ticker_to_analyze = st.selectbox(
             label="Choose Stock to Analyze",
             options=TICKERS
         )
         stock_info = get_yf_company_info(ticker_to_analyze)
-        st.dataframe(stock_info)
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.markdown(info_card("Symbol", stock_info["symbol"].iloc[0]), unsafe_allow_html=True)
+        with col2:
+            st.markdown(info_card("Short Name", stock_info["shortName"].iloc[0]), unsafe_allow_html=True)
+        with col3:
+            st.markdown(info_card("Country", stock_info["country"].iloc[0]), unsafe_allow_html=True)
+        
+        col4, col5, col6 = st.columns(3)
+        with col4:
+            st.markdown(info_card("Sector", stock_info["sector"].iloc[0]), unsafe_allow_html=True)
+        with col5:
+            st.markdown(info_card("Industry", stock_info["industry"].iloc[0]), unsafe_allow_html=True)
+        with col6:
+            st.markdown(info_card("Website", stock_info["website"].iloc[0]), unsafe_allow_html=True)
 
+        st.markdown(info_card("Business Summary", stock_info["longBusinessSummary"].iloc[0]), unsafe_allow_html=True)
+        st.divider()
+
+        col7, col8, col9 = st.columns(3)
+
+        try:
+            # Versuche vorhandene Daten zu lesen
+            up_to_date_av_entries = get_processed_entries_by_symbol(
+                "alphavantage_processed_kpi", ticker_to_analyze
+            )
+
+            # Falls leer → Daten müssen nachgeladen werden
+            if up_to_date_av_entries is None or len(up_to_date_av_entries) == 0:
+                raise ValueError("Keine Daten vorhanden")
+
+        except Exception:
+            # Daten laden
+            with st.spinner("Loading current data.."):
+                load_data([ticker_to_analyze])
+
+                # Erneut abrufen
+                up_to_date_av_entries = get_processed_entries_by_symbol(
+                    "alphavantage_processed_kpi", ticker_to_analyze
+                )
+
+        market_cap_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["market_capitalization"].iloc[0]
+        market_cap = format_number(market_cap_str)
+        pre_ratio_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["pe_ratio"].iloc[0]
+        pe_ratio = format_number(pre_ratio_str)
+        price_to_book_ratio_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["price_to_book_ratio"].iloc[0]
+        ptbr = format_number(price_to_book_ratio_str)
+        
+        col7.metric("Market Capitalization", market_cap)
+        col8.metric("PE-Ratio", pe_ratio)
+        col9.metric("Price/Book", price_to_book_ratio_str)
+
+        col10, col11, col12 = st.columns(3)
+
+        roe_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["return_on_equity_ttm"].iloc[0]
+        roe = format_number(roe_str)
+        profit_margin_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["profit_margin_raw"].iloc[0]
+        profit_margin = format_number(profit_margin_str)
+        beta_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["beta_raw"].iloc[0]
+        beta = format_number(beta_str)
+
+             
+        col10.metric("ROE", roe)
+        col11.metric("Profit-Margin", f"{profit_margin}€")
+        col12.metric("Beta", beta)
 
 
 

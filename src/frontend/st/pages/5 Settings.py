@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 from backend.database.db_functions import get_table_names, delete_table, add_system_config, get_config_dict, delete_system_config, update_system_config, add_list_system_config, get_list_system_config, append_to_list_system_config, remove_from_list_system_config
 from backend.llm_functions import check_connection
-from backend.data_model import initial_tickers, TICKERS
+from backend.data_model import TICKERS
 from backend.scheduler import load_initial_data
 from backend.database.users_database import list_user_tables
 from backend.database.database_utils import delete_any_table
@@ -196,7 +196,7 @@ with st.expander("Data Settings"):
                 custom_tickers_cfg_df = pd.DataFrame(custom_tickers_cfg, columns=["Custom Tickers List"])
                 st.dataframe(custom_tickers_cfg_df, hide_index=True)
             else:
-                df_initial_tickers = pd.DataFrame(initial_tickers, columns=["System Ticker List"])
+                df_initial_tickers = pd.DataFrame(TICKERS, columns=["System Ticker List"])
                 st.dataframe(df_initial_tickers, hide_index=True)
 
 

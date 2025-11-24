@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 from src.backend.api_services.av_connect import fetch_alphavantage_raw, fetch_alphavantage_price_today
-from src.backend.data_model import initial_tickers, TICKERS
+from src.backend.data_model import TICKERS
 from backend.database.db_functions import get_list_system_config
 from backend.data_processing.alphavantage_processed import process_alphavantage_raw_db
 import streamlit as st
@@ -44,7 +44,7 @@ def load_initial_data():
     if new_custom_ticker is not None:
         initial_tickers_list = new_custom_ticker
     else:
-        initial_tickers_list = initial_tickers
+        initial_tickers_list = TICKERS
 
     for ticker in initial_tickers_list:
         try:
@@ -57,7 +57,7 @@ def load_initial_data():
         except Exception as e:
             print(f"Error: {e}")
 
-        time.sleep(30)
+        time.sleep(10)
     
     process_alphavantage_raw_db()
     return f"Updated data at: {today}"
