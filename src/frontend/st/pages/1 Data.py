@@ -3,9 +3,10 @@ import plotly.express as px
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
+import plotly.graph_objects as go
 from backend.data_model import TICKERS
 from backend.scheduler import load_data, load_initial_data
-from backend.database.db_functions import get_table, get_table_names, get_symbols_from_table, get_unique_table, get_yf_company_info
+from backend.database.db_functions import get_table, get_table_names, get_symbols_from_table, get_unique_table, get_yf_company_info, get_yf_price_history
 from backend.data_processing.alphavantage_processed import get_processed_table, process_alphavantage_raw_db, get_processed_entries_by_symbol
 from backend.database.users_database import import_file_as_table, get_user_table, list_user_tables
 import openpyxl
@@ -139,6 +140,23 @@ def format_number_en(value):
     else:
         return f"$ {value:.2f}"
 
+from datetime import datetime
+
+def format_date_string(date_str):
+    # Versucht ISO-Format zuerst (z. B. "2025-01-21 13:44:22")
+    try:
+        dt = datetime.fromisoformat(date_str)
+    except:
+        # Fallback für andere typische Formate
+        try:
+            dt = datetime.strptime(date_str, "%Y-%m-%d")
+        except:
+            try:
+                dt = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+            except:
+                return date_str  # not parsable, return as-is
+
+    return dt.strftime("%d %b %Y")  # z. B. "21 Jan 2025"
 
 #__________________________SIDEBAR___________________________
 st.sidebar.subheader("Data")
@@ -257,16 +275,15 @@ if st.sidebar.button("Import file into database"):
 
 with tab1:
 
-    st.header("Stock Analysis")
-    st.divider()
+    st.header("Single Stock Analysis")
 
     with st.container():
-        st.subheader("Basic Analysis")
+        #st.subheader("Basic Analysis")
         ticker_to_analyze = st.selectbox(
             label="Choose Stock to Analyze",
             options=TICKERS
         )
-        stock_info = get_yf_company_info(ticker_to_analyze)
+        stock_info = get_yf_company_info(ticker_to_analyze) # STOCK INFOOOO
         col1, col2, col3 = st.columns(3)
         with col1:
             st.markdown(info_card("Symbol", stock_info["symbol"].iloc[0]), unsafe_allow_html=True)
@@ -308,6 +325,8 @@ with tab1:
                     "alphavantage_processed_kpi", ticker_to_analyze
                 )
 
+        data_updated_time = up_to_date_av_entries.sort_values("timestamp", ascending=False)["timestamp"].iloc[0]
+
         market_cap_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["market_capitalization"].iloc[0]
         market_cap = format_number(market_cap_str)
         pre_ratio_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["pe_ratio"].iloc[0]
@@ -325,13 +344,189 @@ with tab1:
         roe = format_number(roe_str)
         profit_margin_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["profit_margin_raw"].iloc[0]
         profit_margin = format_number(profit_margin_str)
-        beta_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["beta_raw"].iloc[0]
-        beta = format_number(beta_str)
+        beta = up_to_date_av_entries.sort_values("timestamp", ascending=False)["beta_raw"].iloc[0]
 
              
         col10.metric("ROE", roe)
         col11.metric("Profit-Margin", f"{profit_margin}€")
         col12.metric("Beta", beta)
+
+        st.write("")
+        st.caption(f"Last Updated: {format_date_string(data_updated_time)}")
+        st.divider()
+        
+        def plot_price_history(ticker: str):
+            # Pricing-Daten laden
+            pricing_ticker_data = get_yf_price_history(ticker)
+
+            if pricing_ticker_data.empty:
+                st.warning(f"Keine Preisdaten für {ticker} gefunden.")
+                return
+
+            # ---------------------------
+            # Auswahl der Metrik (Y-Achse)
+            # ---------------------------
+            y_option = st.selectbox(
+                "Choose Metric",
+                ["close", "open", "high", "low", "volume"],
+                index=0
+            )
+
+            # ---------------------------
+            # User kann "ältestes" Startdatum festlegen
+            # ---------------------------
+            min_date = pricing_ticker_data["date"].min()
+            max_date = pricing_ticker_data["date"].max()
+
+            start_date = st.date_input(
+                "Starting Date",
+                value=min_date,
+                min_value=min_date,
+                max_value=max_date
+            )
+
+            # Daten entsprechend filtern
+            filtered_df = pricing_ticker_data[
+                pricing_ticker_data["date"] >= start_date
+            ]
+
+            # ---------------------------
+            # Plot erstellen
+            # ---------------------------
+            fig = px.line(
+                filtered_df,
+                x="date",
+                y=y_option,
+                title=f"{ticker} — {y_option} over time",
+            )
+
+            # Weiße Linie
+            #fig.update_traces(line=dict(color="white"))
+
+            # Layout
+            fig.update_layout(
+                xaxis_title="Date",
+                yaxis_title=y_option.capitalize(),
+                template="plotly_dark",
+                height=450,
+            )
+
+            # RangeSlider unter dem Chart
+            fig.update_xaxes(
+                rangeslider_visible=True,
+                rangeslider=dict(
+                    bgcolor="rgba(255,255,255,0.05)"
+                ),
+            )
+
+            st.plotly_chart(fig, width="stretch")
+        plot_price_history(ticker_to_analyze)
+
+    st.divider()
+    st.header("Compared Stock Analysis")
+    with st.container():
+        tickers_to_compare = st.multiselect(
+            label="Choose Stocks to Compare",
+            options=TICKERS
+        )
+
+        def plot_compare_stocks(tickers: list):
+            if not tickers:
+                st.info("Please select at least one stock.")
+                return
+
+            # --- Daten aller Ticker für globales Mindestdatum laden ---
+            all_data = {}
+            for stock in tickers:
+                df = get_yf_price_history(stock)
+                if df.empty:
+                    st.warning(f"No data for {stock}")
+                    continue
+                all_data[stock] = df
+
+            if not all_data:
+                st.warning("No data found for selected tickers.")
+                return
+
+            # Globales minimalstes Datum aller geladenen Ticker
+            global_min_date = min(df["date"].min() for df in all_data.values())
+            global_max_date = max(df["date"].max() for df in all_data.values())
+
+            # --- Start Date Auswahl ---
+            start_date = st.date_input(
+                "Start Date",
+                value=global_min_date,
+                min_value=global_min_date,
+                max_value=global_max_date
+            )
+
+            # --- Plot erstellen ---
+            fig = go.Figure()
+
+            for stock, df in all_data.items():
+
+                # Startdatum anwenden
+                df_filtered = df[df["date"] >= start_date]
+
+                fig.add_trace(
+                    go.Scatter(
+                        x=df_filtered["date"],
+                        y=df_filtered["close"],
+                        mode="lines",
+                        name=stock
+                    )
+                )
+
+            fig.update_layout(
+                title="Stock Comparison (Close Prices)",
+                xaxis_title="Date",
+                yaxis_title="Close Price",
+                template="plotly_dark",
+                height=500
+            )
+
+            # Plotly-Rangeslider
+            fig.update_xaxes(
+                rangeslider_visible=True,
+                rangeslider=dict(bgcolor="rgba(255,255,255,0.05)")
+            )
+
+            st.plotly_chart(fig, width="stretch")
+        plot_compare_stocks(tickers_to_compare)
+
+
+        def compare_stock_metrics(tickers):
+            if not tickers:
+                st.info("Please select at least one stock.")
+                return
+
+            # Eine Column pro Ticker
+            cols = st.columns(len(tickers))
+
+            for idx, stock in enumerate(tickers):
+                df = get_processed_entries_by_symbol("alphavantage_processed_kpi", stock)
+
+                if df.empty:
+                    cols[idx].warning(f"No KPI data for {stock}")
+                    continue
+
+                # Neuester Eintrag
+                latest = df.sort_values("timestamp", ascending=False).iloc[0]
+
+                # Extract + Format
+                market_cap = format_number(latest["market_capitalization"])
+                pe_ratio   = format_number(latest["pe_ratio"])
+                ptbr       = format_number(latest["price_to_book_ratio"])
+
+                with cols[idx]:
+                    st.subheader(stock)
+
+                    st.metric("Market Cap", market_cap)
+                    st.metric("PE Ratio", pe_ratio)
+                    st.metric("Price/Book", ptbr)
+        compare_stock_metrics(tickers_to_compare)
+        st.divider()
+
 
 
 

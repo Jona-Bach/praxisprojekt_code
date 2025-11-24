@@ -23,7 +23,7 @@ def load_data(data: list):
             fetch_alphavantage_price_today(ticker)
             status_pricing_data.write(f"Fetched Pricing Data for: {ticker}")
             print(f"{ticker} added to Database!")
-            st.success(f"{ticker} was added successfully to the Database!")
+            st.success(f"{ticker} was updated successfully!")
         except Exception as e:
             st.error(f"Could not load data for {ticker}")
 
