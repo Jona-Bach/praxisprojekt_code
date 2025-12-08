@@ -19,7 +19,7 @@ class AV_PROCESSED(Base):
         __tablename__ = "alphavantage_processed_kpi"
 
         __table_args__ = (
-            UniqueConstraint("symbol", name="uq_processed_symbol"),
+            UniqueConstraint("symbol","timestamp", name="uq_processed_symbol"),
         )
 
         id = Column(Integer, primary_key=True, autoincrement=True)

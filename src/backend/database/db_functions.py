@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, String, Integer, Float, ForeignKey, DateTime, inspect, Date, text, Boolean, JSON
 from sqlalchemy.sql import func
-from sqlalchemy.ext.declarative import declarative_base
+#from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime
@@ -337,6 +338,20 @@ class YF_PRICING_RAW(Base_yf):
 
 class YF_PRICE_HISTORY(Base_yf):
     __tablename__ = "yf_price_history"
+
+    symbol = Column(String, primary_key=True)
+    date   = Column(Date, primary_key=True)
+
+    close = Column(Float)              
+    high = Column(Float)             
+    low = Column(Float)                
+    open = Column(Float)             
+    volume = Column(Float) 
+
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
+
+class YF_PRICE_HISTORY_ML(Base_yf):
+    __tablename__ = "yf_price_history_ml"
 
     symbol = Column(String, primary_key=True)
     date   = Column(Date, primary_key=True)
@@ -939,6 +954,50 @@ def create_yf_price_history_entry(
     print(f"✔ YF Pricing-Daten gespeichert: {symbol} am {date}")
     return entry
 
+def create_yf_price_history_entry_ml(
+    symbol: str,
+    date,  # string "YYYY-MM-DD" oder datetime.date
+    
+    open: float = None,
+    high: float = None,
+    low: float = None,
+    close: float = None,
+    volume: float = None,
+):
+    """
+    Erzeugt einen YF_PRICING-Eintrag für historische Yahoo Finance OHLCV-Daten.
+    (Tabelle: yf_pricing)
+    """
+
+    # Datum umwandeln, falls String ("YYYY-MM-DD")
+    if isinstance(date, str):
+        date = datetime.strptime(date, "%Y-%m-%d").date()
+
+    # SQLAlchemy-Objekt erzeugen
+    entry = YF_PRICE_HISTORY_ML(
+        symbol=symbol,
+        date=date,
+
+        open=open,
+        high=high,
+        low=low,
+        close=close,
+        volume=volume,
+    )
+
+    # Versuchen zu speichern
+    try:
+        session_yf.add(entry)
+        session_yf.commit()
+    except IntegrityError as e:
+        session_yf.rollback()
+        print(f"⚠️  Duplikat oder DB-Fehler für {symbol} am {date}: {e}")
+        return None
+
+    print(f"✔ YF Pricing-Daten gespeichert: {symbol} am {date}")
+    return entry
+
+
 def create_yf_company_information_entry(
     symbol: str,
 
@@ -1352,10 +1411,6 @@ def get_yf_company_info(symbol: str):
     return df
 
 def get_yf_price_history(symbol: str):
-    """
-    Lädt die gesamten Preis-Historie-Daten aus der Tabelle YF_PRICING_RAW
-    für ein bestimmtes Symbol als Pandas DataFrame.
-    """
 
     # Query: alle passenden Datensätze holen
     results = (
@@ -1411,5 +1466,61 @@ def get_yf_pricing_raw(symbol: str):
     # Nach Datum sortieren (wichtig!)
     if "date" in df.columns:
         df = df.sort_values("date").reset_index(drop=True)
+
+    return df
+
+
+def get_yf_price_history_ml(symbol: str):
+    """
+    Lädt die gesamten Preis-Historie-Daten aus der Tabelle YF_PRICING_RAW
+    für ein bestimmtes Symbol als Pandas DataFrame.
+    """
+
+    # Query: alle passenden Datensätze holen
+    results = (
+        session_yf.query(YF_PRICE_HISTORY_ML)
+        .filter(YF_PRICE_HISTORY_ML.symbol == symbol)
+        .all()
+    )
+
+    if not results:
+        #print(f"⚠️ Keine Pricing-history-Daten für Symbol {symbol} gefunden.")
+        return pd.DataFrame()
+
+    # SQLAlchemy-Objekte → Dicts
+    data_list = [
+        {c.name: getattr(row, c.name) for c in row.__table__.columns}
+        for row in results
+    ]
+
+    df = pd.DataFrame(data_list)
+
+    # Nach Datum sortieren (wichtig!)
+    if "date" in df.columns:
+        df = df.sort_values("date").reset_index(drop=True)
+
+    return df
+
+def get_all_yf_price_history():
+    """
+    Lädt alle Einträge aus YF_PRICE_HISTORY als DataFrame.
+    """
+
+    results = session_yf.query(YF_PRICE_HISTORY).all()
+
+    if not results:
+        print("⚠️ Keine Einträge in YF_PRICE_HISTORY gefunden.")
+        return pd.DataFrame()
+
+    data_list = [
+        {c.name: getattr(row, c.name) for c in row.__table__.columns}
+        for row in results
+    ]
+
+    df = pd.DataFrame(data_list)
+
+    # Sortieren (symbol + date)
+    if "date" in df.columns:
+        df = df.sort_values(["symbol", "date"]).reset_index(drop=True)
 
     return df
