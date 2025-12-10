@@ -436,5 +436,7 @@ docker-compose*.yml
 #Datenbanken extrahieren:
 data/*.db 
 *.db
-
+#Excel und CSV rausnehmen
+*.xlsx
+*.csv
  
