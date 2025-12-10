@@ -209,7 +209,7 @@ def detect_time_column(df: pd.DataFrame):
         return datetime_cols[0]
 
     # 3. heuristisch nach Namen
-    keywords = ["date", "time", "timestamp","jahr"]
+    keywords = ["date", "time", "timestamp"]
     for c in cols:
         if any(k in c.lower() for k in keywords):
             # Versuch, diese Spalte in datetime zu casten
@@ -244,9 +244,6 @@ def make_future_target(df: pd.DataFrame, time_col: str, target_col: str, horizon
     elif horizon_label == "3 Monate":
         delta = pd.DateOffset(months=3)
         suffix = "3m"
-    elif horizon_label == "1 Jahr":
-        delta = pd.DateOffset(years=1)
-        suffix = "1y"
     else:
         # Kein Shift → nichts verändern
         return df, target_col
@@ -470,7 +467,7 @@ st.markdown(
     """
     <style>
     .big-title {
-        font-size: 8.0rem;
+        font-size: 2.3rem;
         font-weight: 700;
     }
     .subtitle {
@@ -482,8 +479,12 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("🧠 Machine Learning Playground")
-st.text("Baue schnell eigene Modelle auf Basis deiner Finanz- & User-Daten. Wähle Algorithmus, Datenquelle, Features & Target – der Playground übernimmt den Rest.")
+st.markdown('<p class="big-title">🧠 Machine Learning Playground</p>', unsafe_allow_html=True)
+st.markdown(
+    '<p class="subtitle">Baue schnell eigene Modelle auf Basis deiner Finanz- & User-Daten. '
+    'Wähle Algorithmus, Datenquelle, Features & Target – der Playground übernimmt den Rest.</p>',
+    unsafe_allow_html=True,
+)
 
 st.divider()
 
@@ -506,7 +507,6 @@ with st.sidebar:
     data_source = st.selectbox(
         "Datenquelle",
         [
-            "No Table selected",
             "YF_PRICE_HISTORY (alle Symbole)",
             "YF_PRICING_RAW (Symbol)",
             "Alphavantage (einzeln)",
@@ -518,12 +518,8 @@ with st.sidebar:
     symbol = None
     table_name = None
 
-        
     if data_source == "YF_PRICING_RAW (Symbol)":
         symbol = st.text_input("Symbol (z.B. AAPL, MSFT)", value="AAPL")
-
-    elif data_source == "No Table selected":
-        st.info("Choose Table")
 
     elif data_source == "Alphavantage (einzeln)":
         table_name = st.selectbox(
@@ -596,15 +592,8 @@ else:
         time_guess = detect_time_column(df.copy())
         st.metric("Zeitspalte erkannt", time_guess if time_guess else "Keine")
 
-    if data_source == "Alphavantage (einzeln)":
-        st.header(table_name)
-    elif data_source == "User-Tabelle (users_database)":
-        st.header(table_name)
-    else:
-        st.header(data_source)
-
     with st.expander("DataFrame anzeigen", expanded=True):
-        st.dataframe(df.head(50), width="stretch")
+        st.dataframe(df.head(50), use_container_width=True)
 
     numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
     all_cols = df.columns.tolist()
@@ -650,7 +639,6 @@ else:
                 "1 Tag",
                 "3 Wochen",
                 "3 Monate",
-                "1 Jahr",
             ],
             index=0,
         )
@@ -862,21 +850,3 @@ else:
 
             except Exception as e:
                 st.error(f"Fehler beim Training oder bei der Auswertung: {e}")
-
-    # if st.button("Modell speichern"):
-    #     save_path = save_model_bundle(
-    #                         model=model,
-    #                         algo_name=algo_name_for_save,
-    #                         data_source=data_source,
-    #                         feature_cols=active_feature_cols,
-    #                         target_col=effective_target_col,
-    #                         scaler=scaler,
-    #                         horizon_label=horizon_label,
-    #                         label_encoder=label_encoder,
-    #                         time_series_mode=use_time_series,
-    #                         n_lags=n_lags,
-    #                         base_col=target_col if use_time_series else None,
-    #                     )
-
-    #     st.success(f"Modell gespeichert unter: `{save_path}`")
-    #     st.caption("Du kannst diese .pkl-Datei in einem anderen Tab laden und für neue Vorhersagen nutzen.")

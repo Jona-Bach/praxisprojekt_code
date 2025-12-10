@@ -363,7 +363,7 @@ with tab1:
 
             # Falls leer → Daten müssen nachgeladen werden
             if up_to_date_av_entries is None or len(up_to_date_av_entries) == 0:
-                raise ValueError("Keine Daten vorhanden")
+                raise ValueError("No Data found!")
 
         except Exception:
             # Daten laden
@@ -413,7 +413,7 @@ with tab1:
                 pricing_ticker_data = get_yf_pricing_raw(ticker)
 
             if pricing_ticker_data.empty:
-                st.warning(f"Keine Preisdaten für {ticker} gefunden.")
+                st.warning(f"No pricing data for {ticker} found.")
                 return
 
             # ---------------------------
