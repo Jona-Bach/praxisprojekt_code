@@ -2281,6 +2281,23 @@ Die initiale Ticker-Liste umfasst ca. 400 US-Aktien. Internationale Märkte, Kry
 
 **Implikation:** Die Anwendung ist auf US-Equities fokussiert; Diversifikationsanalysen über Asset-Klassen hinweg sind nicht möglich.
 
+**4. Alpha Vantage Key-Erfordernis als Barriere**
+
+Die Nutzung von Alpha Vantage setzt einen API-Key voraus, der manuell auf der Alpha Vantage Website beantragt werden muss. Dies stellt eine zusätzliche Einstiegshürde dar:
+
+- Neue Nutzer müssen sich extern registrieren
+- Der Registrierungsprozess kann mehrere Stunden bis Tage dauern
+- Kostenlose Keys haben strenge Limitierungen (siehe oben)
+- Die Key-Verwaltung ist nur session-basiert, nicht persistent
+
+Zudem ist die Abhängigkeit von einem externen Anbieter problematisch:
+
+- Änderungen der API-Struktur können zu Breaking Changes führen
+- Preisänderungen oder Einstellung des kostenlosen Tiers beeinflussen Nutzbarkeit
+- Datenschutzbedenken bei Übermittlung von Anfragen an Drittanbieter
+
+**Implikation:** Die Alpha Vantage Integration erhöht die Komplexität des Setups und schafft externe Abhängigkeiten. Für einen produktiven Einsatz sollten alternative Datenquellen evaluiert werden, die entweder kostenfrei ohne Key (z.B. Yahoo Finance) oder selbst-gehostet (z.B. lokale CSV-Importe) verfügbar sind.
+
 ### 6.2.2 Machine Learning Methodik
 
 **1. Fehlende Hyperparameter-Optimierung**
@@ -2354,7 +2371,14 @@ LLM-Antworten werden nicht auf Plausibilität, Struktur oder Halluzinationen gep
 - Klassifikationen können nicht-existente Kategorien nennen
 - Begründungen können faktisch inkorrekt sein (z.B. falsche Kennzahlen-Definitionen)
 
-**Implikation:** LLM-Analysen sind als Hypothesen zu behandeln, nicht als verifizierte Fakten. Nutzer müssen Ergebnisse kritisch hinterfragen.
+Zusätzlich besteht ein grundsätzliches **Passung-Problem zwischen LLM-Ausgaben und strukturierten Analyse-Anforderungen**:
+
+- LLMs generieren natürlichsprachliche Texte, während Finanzanalysen oft strukturierte Daten (Tabellen, Kennzahlen, Scores) erfordern
+- Die Extraktion konkreter Vorhersagewerte aus LLM-Texten ist fehleranfällig (Parsing-Probleme)
+- Inkonsistente Formatierung der Antworten erschwert Weiterverarbeitung
+- Vergleichbarkeit zwischen verschiedenen LLM-Analysen ist nicht gegeben
+
+**Implikation:** LLM-Analysen sind als Hypothesen zu behandeln, nicht als verifizierte Fakten. Nutzer müssen Ergebnisse kritisch hinterfragen. Für produktive Szenarien sollte eine strukturierte Output-Schicht implementiert werden (z.B. JSON-Schema-Validierung, Forced Formatting).
 
 **3. Limitierte Kontextlänge**
 
@@ -2364,7 +2388,13 @@ Durch die konfigurierbare Sample-Größe (max. 50 Zeilen) wird nur ein Ausschnit
 - Saisonalität über mehrere Jahre nicht erkennbar
 - Strukturbrüche außerhalb des Samples bleiben unberücksichtigt
 
-**Implikation:** LLM-Analysen fokussieren auf kurzfristige Muster; für langfristige Strategien sind dedizierte statistische Methoden vorzuziehen.
+Diese Limitierung ist nicht primär eine Design-Entscheidung, sondern resultiert aus den **technischen Grenzen der LLM-Kontextfenster**:
+
+- Kleinere Modelle (3-7B Parameter) haben typischerweise Kontextlängen von 2048-4096 Tokens
+- Selbst bei größeren Modellen (13B+) mit 8192+ Token-Limits würde die Übertragung vollständiger Finanz-Datensätze den Kontext dominieren und keinen Raum für Analyse-Output lassen
+- Die Konvertierung von DataFrames zu Text (String-Serialisierung) ist ineffizient und verbraucht überproportional viele Tokens
+
+**Implikation:** LLM-Analysen fokussieren zwangsläufig auf kurzfristige Muster; für langfristige Strategien sind dedizierte statistische Methoden vorzuziehen. Alternative Ansätze wie Summarization-Pipelines (mehrere LLM-Calls mit Zwischen-Aggregation) oder spezialisierte Finanz-LLMs mit längeren Kontexten wären erforderlich.
 
 **4. Keine historische Speicherung**
 
@@ -2406,7 +2436,16 @@ Das vollständige Laden von Tabellen mit mehreren Millionen Zeilen (z.B. Intrada
 
 Die Sicherheitslimits (z.B. max. 100.000 Trainingszeilen) begrenzen zwar den Worst-Case, verhindern aber nicht die initiale Ladezeit.
 
-**Implikation:** Bei sehr großen Datensätzen sollten Nutzer Daten vorab filtern oder aggregieren; die Anwendung bietet keine automatische Lazy-Loading oder Sampling-Strategie.
+**Performance-Problematik im Detail:**
+
+Die Anwendung zeigt bei typischen Nutzungsszenarien folgende Performance-Engpässe:
+
+- **Initiales Laden:** Abfragen über `get_all_yf_price_history()` für 400+ Symbole laden mehrere MB Daten in den RAM
+- **UI-Reaktivität:** Streamlit führt bei jeder Nutzerinteraktion (Filter, Auswahl) ein komplettes Re-Rendering durch
+- **DataFrame-Operationen:** Operationen wie `merge()`, `groupby()` oder `pivot()` auf großen DataFrames blockieren die UI
+- **Keine Caching-Strategie:** Wiederholte Abfragen laden Daten neu, statt auf gecachte Versionen zuzugreifen
+
+**Implikation:** Bei sehr großen Datensätzen sollten Nutzer Daten vorab filtern oder aggregieren; die Anwendung bietet keine automatische Lazy-Loading oder Sampling-Strategie. Für produktive Nutzung mit großen Datenmengen wäre eine grundlegende Refactoring der Datenlade-Logik erforderlich (z.B. virtuelle Scrolling, serverseitiges Paging, asynchrone Queries).
 
 **2. Keine Parallelisierung**
 
@@ -2440,6 +2479,50 @@ Streaming-Responses von Ollama werden nicht unterstützt (Parameter `stream=Fals
 
 **Implikation:** Für bessere UX sollte Streaming implementiert werden; dies erfordert jedoch Refactoring der LLM-Kommunikation.
 
+**5. SQLite als Datenbankwahl: Grenzen für produktive Szenarien**
+
+Die Verwendung von SQLite als primäre Datenbank bietet zwar Vorteile (keine Server-Installation, portabel, einfach zu verwalten), zeigt jedoch substantielle Limitierungen für skalierbare Anwendungen:
+
+**Architektonische Einschränkungen:**
+- **Keine Concurrent Writes:** SQLite sperrt die gesamte Datenbank bei Schreiboperationen, was Multi-User-Szenarien unmöglich macht
+- **Begrenzter Parallelismus:** Selbst Read-Operationen sind durch das Locking-Modell eingeschränkt
+- **Keine Netzwerk-Anbindung:** SQLite ist dateibasiert; verteilte Deployments oder Microservice-Architekturen werden nicht unterstützt
+- **Memory-Limits:** Große Queries (z.B. Joins über Millionen Zeilen) können Memory-Limits überschreiten
+
+**Performance-Charakteristika:**
+- **Indexierung limitiert:** Komplexe Multi-Column-Indices oder Partial Indices zeigen suboptimale Performance
+- **Keine Query-Optimierung:** Kein Query-Planner für komplexe Joins oder Subqueries
+- **I/O-Bottlenecks:** Bei großen Datensätzen (>10 GB) werden Disk-I/O-Operationen zum Engpass
+
+**Alternative Datenbank-Systeme und deren Vorteile:**
+
+Für eine produktive Skalierung sollten folgende Alternativen evaluiert werden:
+
+**PostgreSQL:**
+- Voller ACID-Support mit MVCC (Multi-Version Concurrency Control)
+- Exzellente Performance bei komplexen Queries und großen Datensätzen
+- Fortgeschrittene Indexierungsoptionen (GiST, GIN, BRIN)
+- Native JSON-Support für flexible Schema-Erweiterungen
+- Mature Ecosystem mit Tools wie TimescaleDB für Zeitreihendaten
+
+**MySQL/MariaDB:**
+- Hohe Read-Performance durch optimierte Storage Engines
+- Gute Skalierbarkeit für transaktionale Workloads
+- Breite Tool-Unterstützung und Community
+
+**ClickHouse:**
+- Spezialisiert auf analytische Queries (OLAP)
+- Column-oriented Storage ideal für Aggregationen über große Zeitreihen
+- Exzellente Compression (10-100x Faktor)
+- Sub-Second-Queries über Milliarden Zeilen
+
+**TimescaleDB (PostgreSQL-Extension):**
+- Optimiert für Zeitreihendaten (Finanzmarkt-Use-Case)
+- Automatische Partitionierung (Hypertables)
+- Continuous Aggregates für Pre-Computation
+
+**Implikation:** SQLite ist für Prototyping und Einzelnutzer-Szenarien geeignet, stellt jedoch einen fundamentalen Skalierungs-Blocker dar. Eine Migration zu PostgreSQL (für allgemeine Szenarien) oder TimescaleDB (für Zeitreihen-Fokus) wäre für den produktiven Einsatz essenziell. Dies würde zusätzlich eine Infrastruktur-Schicht (Docker-Compose, Connection-Pooling) erfordern.
+
 ### 6.2.5 Usability und Fehleranfälligkeit
 
 **1. Begrenzte Fehlermeldungen**
@@ -2472,15 +2555,17 @@ Die identifizierten Limitationen lassen sich wie folgt priorisieren:
 
 **Kritische Threats (hoher Einfluss auf Validität):**
 - Fehlende Cross-Validation und Hyperparameter-Tuning (ML-Ergebnisse nicht robust)
-- Keine LLM-Ausgaben-Validierung (Halluzinationen möglich)
+- Keine LLM-Ausgaben-Validierung und strukturelle Passung-Probleme (Halluzinationen möglich, Output-Format inkonsistent)
 - Daten-Leakage-Risiko (fachliche Validität gefährdet)
-- API-Limitierungen (Datenaktualität eingeschränkt)
+- API-Limitierungen und Key-Erfordernis (Datenaktualität eingeschränkt, Setup-Komplexität erhöht)
+- SQLite-Limitierungen (Skalierbarkeit fundamental eingeschränkt)
+- Performance-Engpässe (User Experience bei großen Daten beeinträchtigt)
 
 **Moderate Threats (mittlerer Einfluss):**
 - Vereinfachte Zeitreihen-Validierung (Prognosequalität limitiert)
-- Limitierte Kontextlänge bei LLMs (Langfrist-Trends nicht erfasst)
-- Performance-Probleme bei großen Datensätzen (Usability beeinträchtigt)
+- Limitierte Kontextlänge bei LLMs durch technische Token-Limits (Langfrist-Trends nicht erfasst)
 - Ressourcenabhängigkeit bei LLMs (Hardware-Anforderungen hoch)
+- Keine Parallelisierung bei Datenaktualisierungen (Update-Workflows sehr langsam)
 
 **Geringe Threats (niedriger Einfluss):**
 - Keine Modellinterpretierbarkeit (wünschenswert, aber nicht kritisch für Prototyp)
@@ -2501,18 +2586,24 @@ Basierend auf den identifizierten Threats ergeben sich folgende prioritäre Verb
 - Feature Importance Visualisierung für Tree-basierte Modelle
 - Bessere Fehlermeldungen und Input-Validierung
 - Streaming-Responses für LLM-Ausgaben
+- Strukturierte Output-Validierung für LLM-Antworten (JSON-Schema, Forced Formatting)
 
 **Mittelfristig (MVP → Produktiv):**
 - Professionelles Backtesting-Framework für Zeitreihen (Walk-Forward-Testing)
-- LLM-Ausgaben-Validierung (Plausibilitätsprüfungen, Strukturerkennung)
+- LLM-Ausgaben-Validierung mit Plausibilitätsprüfungen und Strukturerkennung
 - Datenqualitäts-Dashboard (Missing Values, Outliers, Distributions)
-- Parallelisierung von Datenaktualisierungen
+- Parallelisierung von Datenaktualisierungen mit Queue-System
+- **Migration zu PostgreSQL oder TimescaleDB** für verbesserte Performance und Skalierbarkeit
+- Implementierung von Connection-Pooling und Query-Caching
+- Alternative Datenquellen ohne Key-Erfordernis evaluieren
 
 **Langfristig (Produktiv → Advanced):**
 - Integration weiterer Datenquellen (Echtzeit-Feeds, alternative Daten)
 - Fortgeschrittene Feature-Engineering-Pipeline (Embeddings, Target Encoding)
 - Multi-Turn-Dialog für LLM Playground mit Kontext-Speicherung
-- Deployment als Cloud-Service mit Multi-User-Support
+- Deployment als Cloud-Service mit Multi-User-Support auf PostgreSQL-Basis
+- Spezialisierte Finanz-LLMs mit längeren Kontexten oder Summarization-Pipelines
+- Microservice-Architektur mit dedizierter Datenbank-Schicht
 
 Diese Roadmap verdeutlicht, dass die Anwendung ein solides Fundament bietet, das systematisch zu einem produktionsreifen System ausgebaut werden kann.
 
@@ -2522,7 +2613,19 @@ Diese Roadmap verdeutlicht, dass die Anwendung ein solides Fundament bietet, das
 
 Das Praxisprojekt „FinSight" erreicht seine Kernziele als experimentelle Plattform für Finanzanalyse, Machine Learning und LLM-Integration. Die Anwendung demonstriert erfolgreich die Integration heterogener Technologien in einem kohärenten Dashboard-Konzept und bietet sowohl Einsteigern als auch fortgeschrittenen Nutzern einen funktionalen Werkzeugkasten.
 
-Gleichzeitig offenbart die kritische Analyse substantielle Limitationen, insbesondere in Bezug auf ML-Methodik (fehlende Validierung, Hyperparameter-Tuning) und LLM-Verlässlichkeit (Halluzinationen, limitierte Kontextlänge). Diese Threats to Validity sind jedoch kein Scheitern, sondern charakteristisch für den Prototyp-Status und die bewusste Fokussierung auf Exploration statt Produktion.
+Gleichzeitig offenbart die kritische Analyse substantielle Limitationen auf mehreren Ebenen:
+
+**Technische Infrastruktur:**
+- SQLite als Datenbankwahl stellt einen fundamentalen Skalierungs-Blocker dar
+- Performance-Probleme bei großen Datensätzen beeinträchtigen User Experience
+- Alpha Vantage Key-Erfordernis erhöht Setup-Komplexität und schafft externe Abhängigkeiten
+
+**Methodische Aspekte:**
+- ML-Workflows fehlen essenzielle Validierungsschritte (Cross-Validation, Hyperparameter-Tuning)
+- LLM-Integration zeigt strukturelle Passung-Probleme zwischen natürlichsprachlichen Outputs und strukturierten Analyse-Anforderungen
+- Kontextlängen-Limitierungen schränken Analysefähigkeit bei langen Zeitreihen ein
+
+Diese Threats to Validity sind jedoch kein Scheitern, sondern charakteristisch für den Prototyp-Status und die bewusste Fokussierung auf Exploration statt Produktion.
 
 Die Anwendung erfüllt ihren Zweck als Bildungs-, Forschungs- und Prototyping-Tool. Sie ist **nicht geeignet** für Echtzeit-Trading, regulierte Finanzdienstleistungen oder kritische Investitionsentscheidungen ohne zusätzliche Validierung. Sie ist **gut geeignet** für explorative Datenanalyse, Modell-Baselines, LLM-Experimente und als Ausgangspunkt für spezialisierte Erweiterungen.
 
