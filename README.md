@@ -84,11 +84,7 @@ Die Implementierung erfolgt in folgenden Schritten:
 
 4. **Integration und Testing**: Verbindung aller Komponenten und Sicherstellung der Funktionalität über verschiedene Deployment-Szenarien (lokal, Docker-Container).
 
----
-
-Hier ist eine korrigierte und erweiterte Version Ihres Grundlagen-Abschnitts:
-
----
+--- 
 
 ## 2. Grundlagen
 
