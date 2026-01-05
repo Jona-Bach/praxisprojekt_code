@@ -84,4 +84,15 @@ Die Implementierung erfolgt in folgenden Schritten:
 
 4. **Integration und Testing**: Verbindung aller Komponenten und Sicherstellung der Funktionalität über verschiedene Deployment-Szenarien (lokal, Docker-Container).
 
+---
 
+## 2. Grundlagen
+
+Der Folgende abschnitt beschreibt die Grundlagen, die für das weitere Verstehen dieses Projektes nötig sind.
+
+### 2.1 Finanzmarktgrundlagen
+
+Da dieses Dahsbaoed auf Finanzanalyse ausgelegt ist, werden viele wichtige Funktionen und Begriffe  / Methoen die mit der Finanzwelt zu tun haben verwendet, daher sind Finanzmarkttgrundlagen wichtig um das Projekt zu verstehen. 
+
+- **Grundlegende Begriffe** 
+    - OHLCV = OHLCV steht für "Open High Low Close Volume", und steht für die Priesentwicklung die Aktiens innerhalb eines definerten Zeitraums durchläuft. Der Open Preis ist der Preis der Aktie zum Start der Zeitperiode hat, High ist der höchste Preis der die Aktie in dem Zeitraum erreicht, low ist der niedrigste Preis der Aktie in dem Zeitraum, close ist der Letzte Preis der Akite im Zeitraun, Volume ist die Anzahl der Aktien die in dem Zeitraum gehandelt wurden. Typischerweise werden diese 
