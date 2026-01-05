@@ -2,6 +2,40 @@
 
 ---
 
+## Inhaltsverzeichnis
+- [1. Einleitung](#1-einleitung)
+  - [1.1 Problemstellung](#11-problemstellung)
+  - [1.2 Zielsetzung](#12-zielsetzung)
+  - [1.3 Herangehensweise](#13-herangehensweise)
+    - [1.3.1 Technologie-Stack](#131-technologie-stack)
+    - [1.3.2 Datengrundlage](#132-datengrundlage)
+    - [1.3.3 Softwarearchitektur](#133-softwarearchitektur)
+    - [1.3.4 Entwicklungsprozess](#134-entwicklungsprozess)
+- [2. Grundlagen](#2-grundlagen)
+  - [2.1 Finanzmarktgrundlagen](#21-finanzmarktgrundlagen)
+    - [2.1.1 Grundlegende Begriffe](#211-grundlegende-begriffe)
+    - [2.1.2 Wichtige Finanzkennzahlen](#212-wichtige-finanzkennzahlen)
+    - [2.1.3 Zeitreihenanalyse im Finanzkontext](#213-zeitreihenanalyse-im-finanzkontext)
+  - [2.2 Machine Learning Grundlagen](#22-machine-learning-grundlagen)
+    - [2.2.1 Lernparadigmen](#221-lernparadigmen)
+    - [2.2.2 Datenaufteilung und Preprocessing](#222-datenaufteilung-und-preprocessing)
+    - [2.2.3 Machine Learning-Algorithmen](#223-machine-learning-algorithmen)
+    - [2.2.4 Evaluationsmetriken](#224-evaluationsmetriken)
+  - [2.3 Large Language Models (LLMs)](#23-large-language-models-llms)
+    - [2.3.1 Grundlagen von Large Language Models](#231-grundlagen-von-large-language-models)
+    - [2.3.2 Ollama als lokale LLM-Infrastruktur](#232-ollama-als-lokale-llm-infrastruktur)
+    - [2.3.3 LLMs im Finanzkontext](#233-llms-im-finanzkontext)
+- [3. Datenbeschreibung](#3-datenbeschreibung)
+  - [3.1 Datenquellen](#31-datenquellen)
+  - [3.2 Datenumfang](#32-datenumfang)
+  - [3.3 Datenpipeline und Speicherung](#33-datenpipeline-und-speicherung)
+  - [3.4 Datenaufbereitung](#34-datenaufbereitung)
+  - [3.5 Datenqualität und Limitationen](#35-datenqualität-und-limitationen)
+  - [3.6 Nutzerbereitgestellte Daten](#36-nutzerbereitgestellte-daten)
+- [Literatur](#literatur)
+
+---
+
 ## 1. Einleitung
 
 ### 1.1 Problemstellung
