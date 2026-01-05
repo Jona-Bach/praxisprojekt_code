@@ -198,14 +198,136 @@ Für die vorliegende Plattform sind insbesondere folgende Aspekte der Zeitreihen
 
 Diese Konzepte bilden die Grundlage für die Implementierung sowohl der traditionellen Machine Learning-Algorithmen als auch der LLM-basierten Analysen in der Plattform.
 
+Hier ist die überarbeitete und erweiterte Version des Machine Learning-Abschnitts:
+
+---
 
 ### 2.2 Machine Learning Grundlagen
 
- - Supervised vs. Unsupervised learning: Das Supervised und unsupervised Learning also überwachtes und unüberwachtrs lernen sind beides Begriffe aus der KI. Es beschreibt die Trainingsart eines Modelles und hat 2 verschiedene FUbktionen. Bei dem überwachten lernen handelt es sich um die Trainignsmethode bei dem ein Modell mit vorgefertigten Daten die "gelabelt" also beschrieben sind und versucht darauf zu lernen. Bei Regressionen oder Vorgersagen wird diese Arz von lernen genutzt um vorhgersagen auf Daten machen zz können.
+Machine Learning (maschinelles Lernen) bezeichnet Verfahren, bei denen Computer aus Daten lernen, ohne explizit programmiert zu werden. Für die vorliegende Plattform sind sowohl die grundlegenden Konzepte des maschinellen Lernens als auch spezifische Algorithmen relevant, die zur Analyse und Prognose von Finanzdaten eingesetzt werden.
 
- Bei dem Unüberwahcten lernen, bekommt der alogrithmus keine gelabelten Daten sondern lernt sozusagen "blind" auf den ihm gegebene nDatebn. Diese Art von lernen kann so zuum Beispiel für Clustering oder Reinforcment Learning eingesetzt werden, indem das Modell die Daten nahc ihm logisch erscheinendnen Cluster neinteilt.
+#### 2.2.1 Lernparadigmen
 
-# Literatur:
+**Supervised Learning (Überwachtes Lernen)**
+
+Beim überwachten Lernen wird ein Modell mit bereits gelabelten Daten trainiert, das heißt, zu jedem Eingabedatenpunkt existiert eine bekannte Zielgröße (Label). Das Modell lernt die Beziehung zwischen Eingabemerkmalen und Zielgröße und kann anschließend Vorhersagen für neue, unbekannte Daten treffen (Müller & Guido, 2017). Diese Trainingsmethode eignet sich besonders für Regressionsaufgaben (z.B. Kursprognosen) und Klassifikationsaufgaben (z.B. Auf-/Abwärtsbewegungen von Aktienkursen).
+
+Im Kontext dieser Plattform werden überwachte Lernverfahren eingesetzt, um historische Finanzdaten mit bekannten Kursentwicklungen zu nutzen, um zukünftige Entwicklungen vorherzusagen.
+
+**Unsupervised Learning (Unüberwachtes Lernen)**
+
+Im Gegensatz zum überwachten Lernen erhält das Modell beim unüberwachten Lernen keine vorgegebenen Labels. Stattdessen versucht der Algorithmus, eigenständig Strukturen und Muster in den Daten zu identifizieren (Müller & Guido, 2017). Typische Anwendungen sind Clustering-Verfahren, bei denen Datenpunkte nach Ähnlichkeit gruppiert werden, oder Dimensionsreduktionsverfahren zur Extraktion relevanter Features.
+
+Für Finanzanalysen kann unüberwachtes Lernen beispielsweise zur Gruppierung ähnlicher Aktien nach Verhaltensmustern oder zur Identifikation anomaler Marktbewegungen genutzt werden.
+
+#### 2.2.2 Datenaufteilung und Preprocessing
+
+**Trainings-, Validierungs- und Testdaten**
+
+Eine zentrale Praxis im Machine Learning ist die Aufteilung des verfügbaren Datensatzes in separate Teilmengen. Die **Trainingsdaten** (typischerweise 60-80% des Gesamtdatensatzes) dienen zum Training des Modells. Die **Testdaten** (20-40%) werden ausschließlich zur finalen Evaluation verwendet und bleiben dem Modell während des Trainings unbekannt (Hastie et al., 2009).
+
+Diese strikte Trennung ist essentiell, um Data Leakage zu vermeiden – ein Phänomen, bei dem Informationen aus den Testdaten unbeabsichtigt in den Trainingsprozess einfließen und somit zu überschätzten Leistungsmetriken führen. Für Zeitreihendaten, wie sie bei Finanzdaten vorliegen, ist zusätzlich zu beachten, dass die zeitliche Reihenfolge bei der Aufteilung gewahrt bleiben muss: Trainingsdaten stammen aus einem früheren Zeitraum als Testdaten, um realistische Prognoseszenarien zu simulieren.
+
+**Feature-Skalierung**
+
+Merkmale (Features) in Datensätzen können stark unterschiedliche Wertebereiche aufweisen. Während beispielsweise das Handelsvolumen einer Aktie in Millionen gemessen wird, können prozentuale Renditen im Bereich von wenigen Dezimalpunkten liegen. Diese Heterogenität kann die Konvergenz vieler Machine Learning-Algorithmen verlangsamen oder zu suboptimalen Ergebnissen führen (Géron, 2019).
+
+Feature-Skalierung adressiert dieses Problem durch Transformation aller Merkmale in einen einheitlichen Wertebereich, typischerweise [0, 1] bei Min-Max-Skalierung oder auf Standardnormalverteilung (Mittelwert 0, Standardabweichung 1) bei Standardisierung. Dies ermöglicht eine schnellere Konvergenz und verbesserte Modellperformance, insbesondere bei distanzbasierten Algorithmen und neuronalen Netzen.
+
+**Overfitting und Underfitting**
+
+Ein fundamentales Problem beim maschinellen Lernen ist das Finden der Balance zwischen Modellkomplexität und Generalisierungsfähigkeit. **Overfitting** (Überanpassung) tritt auf, wenn ein Modell die Trainingsdaten zu genau lernt, einschließlich Rauschen und zufälliger Schwankungen, wodurch es auf neuen Daten schlecht abschneidet. Das Modell hat die spezifischen Beispiele "auswendig gelernt", statt allgemeine Muster zu erkennen (Müller & Guido, 2017).
+
+**Underfitting** (Unteranpassung) hingegen liegt vor, wenn ein Modell zu einfach ist, um die zugrundeliegenden Strukturen in den Daten zu erfassen. Es generalisiert zwar gut, aber mit schlechter Gesamtperformance, da es selbst auf den Trainingsdaten keine ausreichende Genauigkeit erreicht.
+
+Die Herausforderung besteht darin, ein Modell zu entwickeln, das komplex genug ist, um relevante Muster zu erkennen, aber nicht so komplex, dass es auf trainingsspezifische Besonderheiten überreagiert. Regularisierungstechniken, Cross-Validation und die Überwachung von Trainings- und Validierungsmetriken helfen, dieses Gleichgewicht zu finden.
+
+#### 2.2.3 Machine Learning-Algorithmen
+
+Im Folgenden werden die in der Plattform implementierten Machine Learning-Algorithmen erläutert, die zur Analyse von Finanzdaten eingesetzt werden.
+
+**Lineare Regression**
+
+Die lineare Regression ist ein grundlegendes Regressionsverfahren, das versucht, eine lineare Beziehung zwischen Eingabemerkmalen und einer kontinuierlichen Zielgröße zu modellieren. *Lineare Modelle zur Regression lassen sich als Regressionsmodelle beschreiben, bei denen die Vorhersage bei einem Merkmal eine Gerade ist, bei zwei Merkmalen ist sie eine Ebene und bei mehr Dimensionen eine Hyperebene* (Müller & Guido, 2017).
+
+Obwohl die Annahme linearer Zusammenhänge restriktiv erscheinen mag, können lineare Modelle bei hochdimensionalen Datensätzen mit vielen Features erstaunlich leistungsfähig sein. *Insbesondere wenn Sie mehr Merkmale als Trainingsdatenpunkte haben, lässt sich jede Zielgröße y ausgezeichnet als lineare Funktion modellieren (auf den Trainingsdaten)* (Müller & Guido, 2017). Im Finanzkontext wird lineare Regression häufig zur Trendidentifikation und als Baseline-Modell für komplexere Verfahren verwendet.
+
+**Decision Tree (Entscheidungsbaum)**
+
+Entscheidungsbäume sind hierarchische Modelle, die auf einer Sequenz von binären Entscheidungen basieren. *Entscheidungsbäume sind weitverbreitete Modelle für Klassifikations- und Regressionsaufgaben. Im Wesentlichen erlernen sie eine hierarchische Folge von Ja/Nein-Fragen, die zu einer Entscheidung führen. Diese Fragen sind ähnlich zu denen im Spiel »20 Fragen«* (Müller & Guido, 2017).
+
+Der Algorithmus teilt den Merkmalsraum rekursiv in Regionen auf, wobei jede Teilung durch eine einfache Entscheidungsregel bestimmt wird (z.B. "Ist der gleitende 50-Tage-Durchschnitt größer als der aktuelle Kurs?"). Diese intuitive Struktur macht Entscheidungsbäume interpretierbar, birgt jedoch die Gefahr des Overfittings, insbesondere bei tiefen Bäumen (Breiman et al., 1984).
+
+**Random Forest**
+
+Random Forest ist ein Ensemble-Verfahren, das die Schwächen einzelner Entscheidungsbäume durch Kombination vieler Bäume adressiert. *Ein Random Forest ist im Wesentlichen eine Menge von Entscheidungsbäumen, wobei sich jeder Baum ein wenig von den übrigen unterscheidet. Die Idee bei Random Forests ist, dass jeder Baum eine recht gute Vorhersage treffen kann, aber voraussichtlich einen Teil der Daten overfittet. Wenn wir viele Bäume konstruieren, die alle gut funktionieren und auf unterschiedliche Weise overfitten, können wir durch Mitteln der Ergebnisse das Overfitting reduzieren* (Müller & Guido, 2017).
+
+Die Diversität der Bäume wird durch zwei Mechanismen erreicht: (1) Jeder Baum wird auf einer zufälligen Teilmenge der Trainingsdaten trainiert (Bootstrap-Sampling), und (2) bei jeder Teilung wird nur eine zufällige Auswahl der verfügbaren Features betrachtet. Durch Aggregation der Vorhersagen aller Bäume (Mittelwertbildung bei Regression, Mehrheitsentscheidung bei Klassifikation) entsteht ein robustes Modell mit hoher Generalisierungsfähigkeit (Breiman, 2001).
+
+**Logistische Regression**
+
+Trotz der irreführenden Bezeichnung handelt es sich bei der logistischen Regression um ein Klassifikationsverfahren, nicht um einen Regressionsalgorithmus. *Die zwei beliebtesten linearen Algorithmen zur Klassifikation sind logistische Regression, die in der Klasse linear_model.LogisticRegression implementiert ist, sowie lineare Support Vector Machines (lineare SVMs), implementiert als svm.LinearSVC (SVC steht für Support Vector Classifier). Trotz seines Namens handelt es sich bei LogisticRegression um ein Klassifikationsverfahren und keinen Regressionsalgorithmus, und wir sollten ihn keinesfalls mit LinearRegression verwechseln* (Müller & Guido, 2017).
+
+Die logistische Regression modelliert die Wahrscheinlichkeit der Zugehörigkeit zu einer Klasse mittels der logistischen Funktion (Sigmoid-Funktion). Im Finanzkontext wird sie häufig für binäre Klassifikationsprobleme eingesetzt, beispielsweise zur Vorhersage, ob eine Aktie steigen oder fallen wird.
+
+**Richtungsklassifikation**
+
+Ein spezifischer Anwendungsfall im Finanzbereich ist die Richtungsklassifikation, bei der vorhergesagt wird, ob der Kurs einer Aktie in einem definierten Zeitraum steigt (Label: 1) oder fällt (Label: 0). Dies transformiert das Regressionsproblem der Kursprognose in ein binäres Klassifikationsproblem. Als Features können technische Indikatoren, Momentum-Kennzahlen oder fundamentale Unternehmenskennzahlen dienen. Die Richtungsklassifikation ist besonders relevant für Handelsstrategien, bei denen die Richtung der Kursbewegung wichtiger ist als die exakte Höhe der Veränderung (Atsalakis & Valavanis, 2009).
+
+#### 2.2.4 Evaluationsmetriken
+
+Die Bewertung der Modellleistung erfolgt anhand quantitativer Metriken, die je nach Aufgabenstellung (Regression oder Klassifikation) variieren.
+
+**Klassifikationsmetriken**
+
+**Accuracy (Genauigkeit)**: Die Accuracy gibt den Anteil korrekt klassifizierter Instanzen an allen Vorhersagen an. Sie wird berechnet als:
+
+**Accuracy = (Anzahl korrekter Vorhersagen) / (Gesamtanzahl Vorhersagen)**
+
+Obwohl Accuracy intuitiv verständlich ist, kann sie bei unbalancierten Datensätzen irreführend sein. *Die wichtigsten Werte für den Parameter scoring bei der Klassifikation sind accuracy (der voreingestellte Wert), roc_auc für die Fläche unter der ROC-Kurve, average_precision für die Fläche unter der Relevanz-Sensitivitäts-Kurve, f1, f1_macro, f1_micro und f1_weighted für den binären F1-Score und dessen unterschiedlich gewichtete Varianten* (Müller & Guido, 2017).
+
+**Precision (Präzision)**: Die Precision misst den Anteil der tatsächlich positiven Fälle unter allen als positiv klassifizierten Instanzen. Sie ist besonders relevant, wenn falsch-positive Vorhersagen hohe Kosten verursachen:
+
+**Precision = True Positives / (True Positives + False Positives)**
+
+Im Finanzkontext bedeutet eine hohe Precision, dass bei einer Vorhersage "Kursanstieg" dieser auch tatsächlich mit hoher Wahrscheinlichkeit eintritt (Sokolova & Lapalme, 2009).
+
+**Recall (Sensitivität)**: Der Recall gibt an, welcher Anteil der tatsächlich positiven Fälle vom Modell erkannt wurde:
+
+**Recall = True Positives / (True Positives + False Negatives)**
+
+Ein hoher Recall ist wichtig, wenn das Verpassen positiver Fälle kritisch ist, beispielsweise bei der Identifikation profitabler Handelsmöglichkeiten.
+
+**F1-Score**: Der F1-Score ist das harmonische Mittel aus Precision und Recall und bietet eine ausgewogene Metrik, die beide Aspekte berücksichtigt:
+
+**F1 = 2 × (Precision × Recall) / (Precision + Recall)**
+
+**Regressionsmetriken**
+
+**Mean Squared Error (MSE)**: Der mittlere quadratische Fehler ist eine der gebräuchlichsten Metriken für Regressionsaufgaben. Er berechnet die durchschnittliche quadratische Abweichung zwischen vorhergesagten und tatsächlichen Werten:
+
+**MSE = (1/n) × Σ(y_i - ŷ_i)²**
+
+Durch die Quadrierung werden größere Fehler stärker gewichtet, was das MSE sensitiv gegenüber Ausreißern macht (Müller & Guido, 2017).
+
+**Root Mean Squared Error (RMSE)**: Der RMSE ist die Quadratwurzel des MSE und hat den Vorteil, in derselben Einheit wie die Zielgröße ausgedrückt zu werden:
+
+**RMSE = √MSE**
+
+Im Finanzkontext repräsentiert der RMSE die durchschnittliche absolute Abweichung der Kursprognose in Währungseinheiten, was die Interpretation erleichtert.
+
+**Mean Absolute Error (MAE)**: Der mittlere Absolutfehler berechnet die durchschnittliche absolute Abweichung:
+
+**MAE = (1/n) × Σ|y_i - ŷ_i|**
+
+Im Gegensatz zum MSE gewichtet der MAE alle Fehler linear und ist weniger sensitiv gegenüber Ausreißern. *Bei der Regression sind die am häufigsten verwendeten Werte r2 für den R²-Score, mean_squared_error für den mittleren quadratischen Fehler und mean_absolute_error für den mittleren Absolutfehler* (Müller & Guido, 2017).
+
+**R²-Score (Bestimmtheitsmaß)**: Der R²-Score gibt an, welcher Anteil der Varianz in den Daten durch das Modell erklärt wird. Ein R²-Wert von 1 bedeutet perfekte Vorhersagen, während Werte nahe 0 auf ein Modell hindeuten, das nicht besser als der Durchschnittswert abschneidet. Negative R²-Werte sind möglich und indizieren eine schlechtere Performance als eine triviale Baseline (Durchschnittswertvorhersage).
+
+Die Auswahl der geeigneten Metrik hängt von der spezifischen Aufgabenstellung und den Kosten unterschiedlicher Fehlertypen ab. In der vorliegenden Plattform werden diese Metriken den Nutzern transparent dargestellt, wobei die Interpretation und daraus abgeleitete Handlungsentscheidungen in der Verantwortung der Nutzer liegen.
+
+
+## Literatur:
 - Berk, Jonathan B.; DeMarzo, Peter M. 2015: Grundlagen der Finanzwirtschaft: Analyse, Entscheidung und Umsetzung, 3., aktualisierte Aufl., Pearson Deutschland GmbH
 - Murphy, J. J. (1999). Technical Analysis of the Financial Markets. New York Institute of Finance.
 - Damodaran, A. (2012). Investment Valuation. Wiley Finance.
@@ -215,4 +337,10 @@ Diese Konzepte bilden die Grundlage für die Implementierung sowohl der traditio
 - Müller, Andreas C., and Sarah Guido. Einführung in Machine Learning mit Python : Praxiswissen Data Science, o'Reilly, 2017.
 - Eayrs, Willis E., et al. Corporate Finance Training : Planung, Bewertung und Finanzierung Von Unternehmen, Schaffer-Poeschel Verlag fur Wirtschaft Steuern Recht GmbH, 2011.
 - https://www.investopedia.com
+- Hastie, T., Tibshirani, R., & Friedman, J. (2009). The Elements of Statistical Learning. Springer.
+- Géron, A. (2019). Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow. O'Reilly Media.
+- Breiman, L. (2001). Random Forests. Machine Learning, 45(1), 5-32.
+- Breiman, L., Friedman, J., Stone, C. J., & Olshen, R. A. (1984). Classification and Regression Trees. CRC press.
+- Atsalakis, G. S., & Valavanis, K. P. (2009). Surveying stock market forecasting techniques. Expert Systems with Applications, 36(3), 5932-5944.
+- Sokolova, M., & Lapalme, G. (2009). A systematic analysis of performance measures for classification tasks. Information Processing & Management, 45(4), 427-437.
 
