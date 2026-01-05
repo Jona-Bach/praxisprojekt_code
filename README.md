@@ -727,13 +727,13 @@ Alpha Vantage limitiert kostenlose Accounts auf:
 Die Implementierung enthält Schutzmechanismen zur Einhaltung dieser Limits und zur Vermeidung unnötiger API-Belastung. Die genaue Strategie (z.B. Sleep zwischen Requests, Request-Counter) ist im Code hinterlegt.
 
 **Orchestrierung:**
-API-Calls werden nicht direkt aus [`av_connect.py`](src/backend/api_services/av_connect.py) initiiert, sondern über das zentrale Orchestrierungsmodul [`scheduler.py`](src/backend/scheduler.py). Dies implementiert das **Facade-Pattern** (Gamma et al., 1994) und zentralisiert die Kontrolle über Daten-Updates.
+API-Calls werden nicht direkt aus [`av_connect.py`](src/backend/api_services/av_connect.py) initiiert, sondern über das zentrale Orchestrierungsmodul [`scheduler.py`](src/backend/scheduler.py). Dies zentralisiert die Kontrolle über Daten-Updates.
 
 **Verwendete Funktionen:**
 - [`create_av_raw_entry()`](src/backend/database/db_functions.py): Speichert Rohdaten in `alphavantage.db`
 - [`create_av_pricing_entry()`](src/backend/database/db_functions.py): Speichert Pricing-Daten
 
-#### 3.2.2.2 Yahoo Finance API (yf_connect.py)
+#### 4.2.2.2 Yahoo Finance API (yf_connect.py)
 
 Die Yahoo Finance API wird über die Python-Bibliothek `yfinance` angebunden und erfordert keine Authentifizierung. Die Implementierung befindet sich in [`yf_connect.py`](src/backend/api_services/yf_connect.py).
 
@@ -752,7 +752,7 @@ Die Yahoo Finance API wird über die Python-Bibliothek `yfinance` angebunden und
 
 **[`download_price_history()`](src/backend/api_services/yf_connect.py):**
 - Zweck: Initiales Befüllen der Datenbank
-- Zeitraum: Ab 1995 bis aktuell
+- Zeitraum: Ab 1995 bis 2020
 - Verarbeitung: Batch-Processing für Ticker-Liste
 - Verwendung: Einmalig beim Setup
 
@@ -763,10 +763,6 @@ Die Yahoo Finance API wird über die Python-Bibliothek `yfinance` angebunden und
 
 **Auto-Adjusted Kurse:**
 Alle Funktionen verwenden standardmäßig `auto_adjust=True`, um automatisch für Splits und Dividenden bereinigte Kurse zu laden. Dies ist essentiell für korrekte historische Analysen, da nominale Kurse durch Splits verzerrt wären (Yahoo Finance, 2024).
-
-#### 3.2.2.3 Ollama API (ollama_connect.py)
-
-Die Ollama-Anbindung ermöglicht die lokale Ausführung von Large Language Models. Die Implementierung erfolgt in [`ollama_connect.py`](src/backend/api_services/ollama_connect.py) mit unterstützenden Hilfsfunktionen in [`llm_functions.py`](src/backend/llm_functions.py).
 
 **Verbindungsmanagement:**
 
@@ -788,9 +784,9 @@ Die Ollama-Anbindung ermöglicht die lokale Ausführung von Large Language Model
   - `'container'`: `http://ollama:11434` (Container-zu-Container-Kommunikation)
 - Rationale: Verschiedene Deployment-Szenarien erfordern unterschiedliche Netzwerk-Konfigurationen
 
-### 3.2.3 Datenverarbeitung (ETL-Pipeline)
+### 4.2.3 Datenverarbeitung (ETL-Pipeline)
 
-#### 3.2.3.1 Alpha Vantage Processing
+#### 4.2.3.1 Alpha Vantage Processing
 
 Die Verarbeitung der Alpha Vantage-Rohdaten erfolgt durch das Modul [`alphavantage_processing.py`](src/backend/data_processing/alphavantage_processing.py) und implementiert eine einfache **ETL-Pipeline** (Extract, Transform, Load).
 
@@ -799,17 +795,8 @@ Rohdaten werden aus `alphavantage.db` extrahiert:
 - Tabelle `alphavantage_daily_pricing` → Pandas DataFrame
 - Tabelle `alphavantage_raw_kpi` → Pandas DataFrame
 
-**Transform-Phase:**
-Datenbereinigung nach folgenden Regeln:
-- **NaN-Eliminierung**: Spalten mit >80% NULL-Werten werden entfernt
-- **Duplikat-Entfernung**: Identische `(symbol, date)`-Kombinationen werden dedupliziert
-- **Typkonvertierung**: Datumsspalten werden zu `datetime`-Objekten konvertiert
-- **Sortierung**: Chronologische Sortierung nach Datum
-
-Die Schwellenwert-Wahl von 80% für NaN-Eliminierung ist pragmatisch begründet: Spalten mit überwiegend fehlenden Werten bieten keinen analytischen Mehrwert und vergrößern unnötig das Datenvolumen. Ein niedrigerer Schwellenwert würde potenziell relevante Spalten entfernen; ein höherer würde nutzlose Spalten beibehalten.
-
 **Load-Phase:**
-Bereinigte Daten werden in `alphavantage_processed.db` geschrieben:
+Daten werden automatisch bereinigt und verjüngte in `alphavantage_processed.db` geschrieben:
 - Tabelle `alphavantage_pricing_processed`
 - Tabelle `alphavantage_processed_kpi`
 - `UNIQUE`-Constraint auf `(symbol, date)` verhindert Duplikate auf Datenbankebene
@@ -827,9 +814,9 @@ Das Modul stellt Hilfsfunktionen für Frontend-Abfragen bereit:
 - [`get_processed_entries_by_symbol()`](src/backend/data_processing/alphavantage_processing.py): Filtert Daten nach Symbol
 - [`get_processed_table()`](src/backend/data_processing/alphavantage_processing.py): Lädt komplette Tabelle
 
-#### 3.2.3.2 Daten-Update-Orchestrierung (scheduler.py)
+#### 4.2.3.2 Daten-Update-Orchestrierung (scheduler.py)
 
-Das Modul [`scheduler.py`](src/backend/scheduler.py) fungiert als zentraler Orchestrator für Daten-Updates und implementiert das **Coordinator-Pattern** (Buschmann et al., 1996).
+Das Modul [`scheduler.py`](src/backend/scheduler.py) fungiert als zentraler Orchestrator für Daten-Updates und das initiale Laden der Daten.
 
 **Hauptfunktionen:**
 
@@ -859,13 +846,13 @@ Die Bezeichnung "scheduler" impliziert zeitgesteuerte Ausführung. Aktuell erfol
 
 ---
 
-## 3.3 Backend-Implementierung
+## 4.3 Backend-Implementierung
 
-### 3.3.1 Datenbankschicht
+### 4.3.1 Datenbankschicht
 
-#### 3.3.1.1 Zentrale Datenzugriffsschicht (db_functions.py)
+#### 4.3.1.1 Zentrale Datenzugriffsschicht (db_functions.py)
 
-Das Modul [`db_functions.py`](src/backend/database/db_functions.py) implementiert das **Data Access Object (DAO) Pattern** (Alur et al., 2001) und kapselt sämtliche Datenbankoperationen. Dies gewährleistet eine konsistente Schnittstelle zwischen Frontend und Datenbank und ermöglicht eine zentrale Fehlerbehandlung.
+Das Modul [`db_functions.py`](src/backend/database/db_functions.py) implementiert und kapselt sämtliche Datenbankoperationen. Dies gewährleistet eine konsistente Schnittstelle zwischen Frontend und Datenbank und ermöglicht eine zentrale Fehlerbehandlung.
 
 **Funktionsgruppen:**
 
@@ -891,7 +878,7 @@ Das Modul [`db_functions.py`](src/backend/database/db_functions.py) implementier
 Diese generischen Funktionen abstrahieren SQLAlchemy-Operationen und bieten eine einheitliche Pandas-basierte Schnittstelle, die im gesamten Frontend verwendet wird.
 
 **System-Konfiguration (Key-Value-Store):**
-- [`add_system_config(name: str, value: str, data_type: str, description: str)`](src/backend/database/db_functions.py): Neuen Config-Eintrag anlegen
+- [`add_system_config(name: str, value: str, tag: bool)`](src/backend/database/db_functions.py): Neuen Config-Eintrag anlegen
 - [`get_system_config_by_name(name: str)`](src/backend/database/db_functions.py): Config-Wert auslesen
 - [`get_config_dict(name: str)`](src/backend/database/db_functions.py): Config als Dictionary
 - [`update_system_config(name: str, value: str)`](src/backend/database/db_functions.py): Config aktualisieren
@@ -921,7 +908,7 @@ Diese Funktionen sind auf typische Frontend-Anfragen optimiert und liefern vorge
 - [`get_symbols_from_table(database_path: str, table_name: str)`](src/backend/database/db_functions.py): Extrahiert eindeutige Symbole aus Tabelle
 - Verwendung: Population von Dropdown-Menüs im Frontend
 
-#### 3.3.1.2 Nutzerdatenbank-Verwaltung (users_database.py)
+#### 4.3.1.2 Nutzerdatenbank-Verwaltung (users_database.py)
 
 Das Modul [`users_database.py`](src/backend/database/users_database.py) verwaltet die dynamisch erstellten Nutzertabellen und implementiert spezielle Logik für CSV/Excel-Imports.
 
@@ -941,7 +928,7 @@ Das Modul [`users_database.py`](src/backend/database/users_database.py) verwalte
 
 Die Trennung dieser Logik von [`db_functions.py`](src/backend/database/db_functions.py) folgt dem **Single Responsibility Principle**: [`db_functions.py`](src/backend/database/db_functions.py) verwaltet Systemdatenbanken, [`users_database.py`](src/backend/database/users_database.py) verwaltet Nutzerdatenbanken.
 
-#### 3.3.1.3 Utility-Funktionen (database_utils.py)
+#### 4.3.1.3 Utility-Funktionen (database_utils.py)
 
 Das Modul [`database_utils.py`](src/backend/database/database_utils.py) stellt übergreifende Hilfsfunktionen bereit.
 
@@ -951,13 +938,185 @@ Das Modul [`database_utils.py`](src/backend/database/database_utils.py) stellt �
 - Implementierung: Mapping von Source-String zu Datenbankpfad, Delegierung an [`delete_table()`](src/backend/database/db_functions.py)
 - Rationale: Vereinfachung der Löschlogik im Frontend durch Single-Entry-Point
 
-### 3.3.2 Machine Learning Pipeline
+### 4.3.2 Machine Learning Pipeline
 
-Die Machine Learning-Komponenten befinden sich im Ordner [`machine_learning/`](src/backend/machine_learning/). Die dort enthaltenen Module ([`get_training_data.py`](src/backend/machine_learning/get_training_data.py), [`price_predictions.py`](src/backend/machine_learning/price_predictions.py), [`processing_datasets.py`](src/backend/machine_learning/processing_datasets.py), [`training_data.py`](src/backend/machine_learning/training_data.py), [`tree_ml.py`](src/backend/machine_learning/tree_ml.py), [`up_or_down.py`](src/backend/machine_learning/up_or_down.py)) sind in der aktuellen Version nicht aktiv im Frontend eingebunden und werden daher in dieser Dokumentation nicht detailliert beschrieben. Die Module enthalten Vorarbeiten zur Datenextraktion, Datensatzverarbeitung und Algorithmus-Konfiguration, die als Basis für zukünftige ML-Funktionalitäten dienen können.
+Einige Machine Learning-Komponenten befinden sich im Ordner [`machine_learning/`](src/backend/machine_learning/). Die dort enthaltenen Module ([`get_training_data.py`](src/backend/machine_learning/get_training_data.py), [`price_predictions.py`](src/backend/machine_learning/price_predictions.py), [`processing_datasets.py`](src/backend/machine_learning/processing_datasets.py), [`training_data.py`](src/backend/machine_learning/training_data.py), [`tree_ml.py`](src/backend/machine_learning/tree_ml.py), [`up_or_down.py`](src/backend/machine_learning/up_or_down.py)) sind in der aktuellen Version nicht aktiv im Frontend eingebunden und werden daher in dieser Dokumentation nicht detailliert beschrieben. Die Module enthalten Vorarbeiten zur Datenextraktion, Datensatzverarbeitung und Algorithmus-Konfiguration, die als Basis für zukünftige ML-Funktionalitäten dienen können.
 
-### 3.3.3 LLM-Integration
+Die Machine-Learning-Funktionalität ist in der aktuellen Version **direkt im Streamlit-Frontend** implementiert und befindet sich unter  
+[`src/frontend/st/pages/2 Machine Learning.py`](src/frontend/st/pages/2%20Machine%20Learning.py).  
+Der Playground erlaubt es, auf Basis der vorhandenen Datenquellen (Yahoo Finance / AlphaVantage / User-Tabellen) schnell Modelle zu trainieren, zu evaluieren und als `.pkl` zu speichern.
 
-#### 3.3.3.1 Verbindungs-Management (llm_functions.py)
+
+**Überblick: Ziel des Playgrounds**
+
+Der ML-Playground ist als **experimentelle Trainings- und Evaluationsumgebung** konzipiert. Nutzer:innen können:
+
+- eine Datenquelle auswählen (z.B. AlphaVantage Pricing + KPI)
+- Feature-Spalten (X) und Target-Spalte (y) bestimmen
+- optional einen **Vorhersagehorizont** (Zukunfts-Target) aktivieren
+- optional einen **Zeitreihenmodus** mit Lag-Features nutzen
+- ein Modell trainieren und einfache Metriken/Plots sehen
+- das trainierte Modell inkl. Metadaten speichern
+
+Die Speicherung erfolgt als **Model-Bundle** (Joblib) unter `saved_models/`.
+
+**Automatische Vorverarbeitung (Typ-Konvertierung)**
+
+Um unterschiedliche Datenquellen möglichst robust nutzbar zu machen, wird eine automatische Konvertierung angewendet:
+
+**1) Numerik-Erkennung (`_try_parse_numeric_series`)**
+- versucht String-Spalten als Float zu parsen
+- unterstützt u.a.:
+  - `1.234,56` → `1234.56` (deutsche Schreibweise)
+  - `12,3%` → `12.3`
+  - Entfernen von `€`, `$`, Leerzeichen
+- eine Spalte wird nur konvertiert, wenn mindestens ~50% der Werte plausibel numerisch sind
+
+**2) Datums-/Zeit-Erkennung (`auto_convert_numeric_and_datetime`)**
+- erkennt Spalten mit Namen wie `date`, `time`, `timestamp`
+- konvertiert per `pd.to_datetime` (wenn >50% sinnvoll parsebar sind)
+
+Diese Schritte reduzieren manuelle Fehler und ermöglichen ein flexibles Arbeiten mit heterogenen Tabellen.
+
+
+**Auswahl von Feature- und Target-Spalten**
+
+Im UI können Features (`X`) als Multiselect gewählt werden und ein Target (`y`) per Selectbox.  
+Wichtig: Bei Regression kann **Data Leakage** entstehen, wenn `target_col` gleichzeitig in den Feature-Spalten enthalten ist und kein Shift/Time-Series-Mode verwendet wird. Dafür zeigt der Playground einen Hinweis an.
+
+
+**Zukunfts-Target / Vorhersagehorizont**
+
+Optional kann ein **Zukunfts-Target** erzeugt werden:
+
+\[
+y_{\text{future}}(t) = y(t + \Delta)
+\]
+
+Unterstützte Horizonte:
+- `1 Tag`
+- `3 Wochen`
+- `3 Monate`
+- `1 Jahr`
+
+Implementiert wird dies als Merge-Shift auf der Zeitspalte (`timestamp`/`date`/etc.).  
+Zeilen, für die kein Future-Wert existiert, werden entfernt (Drop-NaN).
+
+**Zeitreihenmodus (Lag-Features)**
+
+Der Zeitreihenmodus erzeugt aus einer Basis-Spalte (typischerweise dem Target) automatisch Lag-Features:
+
+- `target_lag_1, target_lag_2, ... target_lag_n`
+
+Beispiel bei `n_lags = 5`:
+- `close_lag_1` = close(t-1)
+- `close_lag_5` = close(t-5)
+
+Diese Lag-Spalten werden dann als Features genutzt.  
+Für den Train/Test-Split wird `shuffle=False` verwendet, um die zeitliche Ordnung nicht zu zerstören.
+
+**Feature-Engineering & Encoding**
+
+Für die Modellierung werden Features abhängig vom Typ verarbeitet:
+
+**Numerische Features**
+- bleiben numerisch oder werden aus Strings konvertiert (wie oben)
+- optionales Scaling per `StandardScaler`
+
+**Kategorische Features**
+- werden per One-Hot-Encoding (`pd.get_dummies(drop_first=True)`) kodiert  
+  → reduziert Dummy-Falle, jedoch kann es bei vielen Kategorien zu Feature-Explosion kommen
+
+**NaN-Handling**
+- nach Encoding und Target-Konvertierung werden NaNs konsequent entfernt  
+  → falls dadurch keine Daten übrig bleiben, wird ein Fehler geworfen
+
+
+**Unterstützte Algorithmen (Kurzbeschreibung)**
+
+Im Playground stehen mehrere Modelltypen zur Auswahl:
+
+##### 1) Lineare Regression (Regression)
+**Zweck:** Prognose eines kontinuierlichen Werts (z.B. Preis, KPI).  
+**Eigenschaften:**
+- lernt lineare Zusammenhänge zwischen Features und Target
+- schnell, gut interpretierbar
+- anfällig für nichtlineare Muster
+
+##### 2) Decision Tree Regressor (Regression)
+**Zweck:** Regression mit nichtlinearen Zusammenhängen.  
+**Eigenschaften:**
+- bildet Entscheidungsregeln (Splits) über Features
+- kann nichtlineare Beziehungen modellieren
+- Risiko: Overfitting bei tiefen Bäumen / wenig Daten
+
+##### 3) Random Forest Regressor (Regression)
+**Zweck:** robusteres Regressionsmodell durch Ensemble vieler Trees.  
+**Eigenschaften:**
+- reduziert Overfitting im Vergleich zu einem einzelnen Tree
+- kann komplexe Muster abbilden
+- mehr Rechenzeit/Memory, weniger interpretierbar
+
+##### 4) Logistische Regression (Klassifikation)
+**Zweck:** Klassifikation eines diskreten Targets (z.B. Klasse A/B/C).  
+**Eigenschaften:**
+- lineares Modell, aber für Klassifikation (Wahrscheinlichkeiten)
+- benötigt Encodierung der Klassen (LabelEncoder)
+- profitiert oft von Feature-Scaling
+
+##### 5) Richtungsklassifikation (Up/Down) mit LogReg
+**Zweck:** Vorhersage, ob ein zukünftiger Wert höher ist als der aktuelle.  
+Target wird binär erzeugt:
+
+- `direction_up = 1`, wenn `future_value > current_value`, sonst `0`
+
+Diese Variante setzt voraus, dass ein Vorhersagehorizont (Shift) aktiv ist.
+
+
+**Evaluation & Visualisierung**
+
+Je nach Modelltyp werden unterschiedliche Metriken ausgegeben:
+
+**Regression**
+- MSE (Mean Squared Error)
+- RMSE (Root Mean Squared Error)
+- R² (Bestimmtheitsmaß)
+- Linienplot: `y_true` vs. `y_pred` (Streamlit line_chart)
+
+**Klassifikation**
+- Accuracy
+- Konfusionsmatrix (ConfusionMatrixDisplay)
+
+
+**Modell-Speicherung (Model Bundles)**
+
+Trainierte Modelle werden als `.pkl` in `saved_models/` gespeichert.  
+Gespeichert werden neben dem Modell auch Metadaten, u.a.:
+
+- Algorithmus-Name
+- Datenquelle
+- Feature-Spalten / Target-Spalte
+- optionaler Scaler
+- Vorhersagehorizont
+- LabelEncoder (bei Klassifikation)
+- Time-Series-Mode + Lag-Parameter
+
+Damit ist eine spätere Wiederverwendung (Inference) grundsätzlich möglich, sofern die Input-Features wieder im gleichen Schema vorliegen.
+
+
+#### Grenzen und bekannte Einschränkungen
+
+- **Kein Hyperparameter-Tuning:** Modelle werden mit Standard-Settings trainiert (z.B. RandomForest mit fixen `n_estimators`).
+- **Kein Cross-Validation:** Aktuell nur Train/Test-Split; Ergebnisse können je nach Split variieren.
+- **NaN-Drop kann Daten stark reduzieren:** Bei vielen fehlenden Werten kann nach Preprocessing nur ein kleiner Rest übrig bleiben.
+- **Feature-Explosion bei One-Hot-Encoding:** Sehr viele Kategorien können zu großen, sparsamen Feature-Matrizen führen.
+- **Zeitreihen-Validierung vereinfacht:** Der Zeitreihenmodus verhindert Shuffle, ersetzt aber kein professionelles Walk-Forward/Backtesting.
+- **Rate-Limits / Datenqualität:** Je nach Datenquelle können Lücken, Ausreißer oder API-Limits das Training beeinflussen.
+- **Daten-Leakage möglich:** Wenn Target und Features nicht sauber getrennt sind (Playground warnt in typischen Fällen, kann aber nicht alle Leaks erkennen).
+
+### 4.3.3 LLM-Integration
+
+#### 4.3.3.1 Verbindungs-Management (llm_functions.py)
 
 Das Modul [`llm_functions.py`](src/backend/llm_functions.py) abstrahiert die Kommunikation mit Ollama und stellt Hilfsfunktionen für Verbindungsprüfung und Konfiguration bereit.
 
@@ -979,9 +1138,9 @@ Das Modul [`llm_functions.py`](src/backend/llm_functions.py) abstrahiert die Kom
   - Container-zu-Container-Kommunikation
 - Rationale: Flexibles Deployment ohne Code-Änderungen
 
-### 3.3.4 Hilfsfunktionen und Konfiguration
+### 4.3.4 Hilfsfunktionen und Konfiguration
 
-#### 3.3.4.1 Zentrale Datenstrukturen (data_model.py)
+#### 4.3.4.1 Zentrale Datenstrukturen (data_model.py)
 
 Das Modul [`data_model.py`](src/backend/data_model.py) definiert anwendungsweite Konstanten und Standard-Konfigurationen.
 
@@ -989,6 +1148,7 @@ Das Modul [`data_model.py`](src/backend/data_model.py) definiert anwendungsweite
 - Inhalt: Ca. 400 Aktiensymbole
 - Verwendung:
   - Initiales Datenbank-Setup via [`download_price_history()`](src/backend/api_services/yf_connect.py)
+  - Initiales Laden der Ticker via [`load_initial_data`](src/backend/scheduler.py)
   - Fallback bei fehlender Custom-Ticker-Liste
   - Basis für Dropdown-Menüs im Frontend
   - Referenz in Settings-Seite
@@ -1000,7 +1160,7 @@ Das Modul [`data_model.py`](src/backend/data_model.py) definiert anwendungsweite
 
 Die Auslagerung dieser Definitionen in ein separates Modul folgt dem Prinzip der **Konfiguration als Code** und erleichtert Anpassungen ohne Suche im gesamten Codebase.
 
-#### 3.3.4.2 Markdown-Content (markdown.py)
+#### 4.3.4.2 Markdown-Content (markdown.py)
 
 Das Modul [`markdown.py`](src/backend/markdown.py) enthält die Textinhalte für Welcome- und Setup-Seiten als String-Konstanten.
 
@@ -1014,7 +1174,7 @@ Auslagerung von UI-Texten aus Frontend-Code verbessert:
 - **Wiederverwendbarkeit**: Gleiche Texte können in mehreren Pages verwendet werden
 - **Übersichtlichkeit**: Frontend-Code fokussiert auf Logik statt Content
 
-#### 3.3.4.3 Anwendungsstart (launch.py)
+#### 4.3.4.3 Anwendungsstart (launch.py)
 
 Das Modul [`launch.py`](src/backend/launch.py) dient als Einstiegspunkt für die Docker-Container-Ausführung.
 
@@ -1028,9 +1188,9 @@ Zentralisierung der Startkonfiguration vereinfacht Docker-Deployment und vermeid
 
 ---
 
-## 3.4 Frontend-Implementierung
+## 4.4 Frontend-Implementierung
 
-### 3.4.1 Streamlit-Architektur
+### 4.4.1 Streamlit-Architektur
 
 Die Frontend-Implementierung nutzt Streamlit's **Multi-Page-App-Struktur**, bei der Seiten automatisch aus dem [`pages/`](src/frontend/st/pages/)-Ordner geladen werden (Streamlit Inc., 2024). Der Einstiegspunkt ist [`Start.py`](src/frontend/st/Start.py), die als Hauptseite beim Aufruf der Anwendung angezeigt wird.
 
@@ -1042,11 +1202,11 @@ Streamlit's Session State wird für **transiente UI-Zustände** verwendet, die n
 - UI-Element-Stati (Expander geöffnet/geschlossen)
 - Zwischenergebnisse von Berechnungen
 
-Für **persistente Zustände** wird stattdessen `system_config.db` verwendet (siehe 3.2.1.4). Diese Hybridstrategie kombiniert die Vorteile beider Ansätze: Session State für Performance, Datenbank für Persistenz.
+Für **persistente Zustände** wird stattdessen `system_config.db` verwendet (siehe 4.2.1.4). Diese Hybridstrategie kombiniert die Vorteile beider Ansätze: Session State für Performance, Datenbank für Persistenz.
 
-### 3.4.2 Seitenstruktur
+### 4.4.2 Seitenstruktur
 
-#### 3.4.2.1 Startseite (Start.py)
+#### 4.4.2.1 Startseite (Start.py)
 
 Die Startseite [`Start.py`](src/frontend/st/Start.py) dient als Einstiegspunkt und umfasst:
 
@@ -1069,7 +1229,7 @@ st.set_page_config(
 
 Die Aufteilung in Tabs (statt separate Seiten) reduziert die Anzahl der Navigation-Items und gruppiert konzeptionell zusammengehörige Inhalte.
 
-#### 3.4.2.2 Datenmanagement (1 Data.py)
+#### 4.4.2.2 Datenmanagement (1 Data.py)
 
 Die Seite [`1 Data.py`](src/frontend/st/pages/1 Data.py) implementiert alle datenbezogenen Funktionalitäten:
 
@@ -1084,7 +1244,7 @@ Die Seite [`1 Data.py`](src/frontend/st/pages/1 Data.py) implementiert alle date
 - Plotly für interaktive Charts (Zoom, Pan, Hover-Tooltips)
 - Direkte Aufrufe von Backend-Funktionen aus [`db_functions.py`](src/backend/database/db_functions.py) und [`yf_connect.py`](src/backend/api_services/yf_connect.py)
 
-#### 3.4.2.3 Machine Learning (2 Machine Learning.py)
+#### 4.4.2.3 Machine Learning (2 Machine Learning.py)
 
 Die Seite [`2 Machine Learning.py`](src/frontend/st/pages/2 Machine Learning.py) bietet die Schnittstelle für ML-Workflows:
 
@@ -1096,7 +1256,7 @@ Die Seite [`2 Machine Learning.py`](src/frontend/st/pages/2 Machine Learning.py)
 
 Die konkrete Implementierung dieser Funktionalitäten ist in der aktuellen Version noch ausstehend, da die ML-Module im Backend noch nicht vollständig in die UI integriert sind.
 
-#### 3.4.2.4 LLM Playground (3 LLM Playground.py)
+#### 4.4.2.4 LLM Playground (3 LLM Playground.py)
 
 Die Seite [`3 LLM Playground.py`](src/frontend/st/pages/3 LLM Playground.py) ermöglicht Interaktion mit dem LLM:
 
@@ -1106,7 +1266,7 @@ Die Seite [`3 LLM Playground.py`](src/frontend/st/pages/3 LLM Playground.py) erm
 - Kontextualisierung (Einbindung von Finanzdaten)
 - Response-Darstellung (Streaming oder vollständige Antwort)
 
-#### 3.4.2.5 Assistent (4 Assistant.py)
+#### 4.4.2.5 Assistent (4 Assistant.py)
 
 Die Seite [`4 Assistant.py`](src/frontend/st/pages/4 Assistant.py) implementiert einen Chatbot zur Nutzerunterstützung:
 
@@ -1116,7 +1276,7 @@ Die Seite [`4 Assistant.py`](src/frontend/st/pages/4 Assistant.py) implementiert
 - Hilfe-Prompts für Dashboard-Nutzung
 - Integration mit Ollama via [`ollama_connect.py`](src/backend/api_services/ollama_connect.py)
 
-#### 3.4.2.6 Einstellungen (5 Settings.py)
+#### 4.4.2.6 Einstellungen (5 Settings.py)
 
 Die Seite [`5 Settings.py`](src/frontend/st/pages/5 Settings.py) bietet Konfigurationsmöglichkeiten:
 
@@ -1128,7 +1288,7 @@ Die Seite [`5 Settings.py`](src/frontend/st/pages/5 Settings.py) bietet Konfigur
 
 Die Settings-Seite nutzt intensiv die `system_config.db`-Funktionen, um Einstellungen persistent zu speichern.
 
-### 3.4.3 Asset-Management
+### 4.4.3 Asset-Management
 
 **Primärer Asset-Ordner:**
 [`src/frontend/st/assets/`](src/frontend/st/assets/) enthält:
@@ -1140,9 +1300,9 @@ Der Unterordner [`pages/assets_safety/`](src/frontend/st/pages/assets_safety/) d
 
 ---
 
-## 3.5 Containerisierung und Deployment
+## 4.5 Containerisierung und Deployment
 
-### 3.5.1 Dockerfile
+### 4.5.1 Dockerfile
 
 Das [`Dockerfile`](Dockerfile) definiert das Container-Image für die Hauptanwendung:
 
@@ -1170,22 +1330,18 @@ Das [`Dockerfile`](Dockerfile) definiert das Container-Image für die Hauptanwen
 **Entry Point:**
 - Start via [`launch.py`](src/backend/launch.py)
 
-### 3.5.2 Docker Compose
+### 4.5.2 Docker Compose
 
 Die Datei [`docker-compose.yml`](docker-compose.yml) orchestriert zwei Services:
 
 **Service: app**
 - Build-Context: Aktuelles Verzeichnis
 - Port-Mapping: 8501:8501
-- Volumes:
-  - [`./data`](data): Persistierung der Datenbanken
-  - [`./saved_models`](saved_models): Persistierung trainierter ML-Modelle
 - Environment-Variablen: Streamlit-Konfiguration
 - Dependency: Wartet auf Ollama-Service
 
 **Service: ollama**
 - Image: `ollama/ollama:latest` (offizielles Ollama-Image)
-- Port-Mapping: 11434:11434
 - Volume: `ollama_data` für Modell-Persistierung
 - Rationale: Lokale LLM-Ausführung ohne Cloud-Abhängigkeit
 
@@ -1193,7 +1349,7 @@ Die Datei [`docker-compose.yml`](docker-compose.yml) orchestriert zwei Services:
 - Bridge-Netzwerk für Container-zu-Container-Kommunikation
 - Ermöglicht App-Zugriff auf Ollama via Hostname `ollama`
 
-### 3.5.3 Dependency Management
+### 4.5.3 Dependency Management
 
 Die Datei [`requirements.txt`](requirements.txt) spezifiziert alle Python-Abhängigkeiten mit **Version-Pinning** zur Gewährleistung reproduzierbarer Builds:
 
@@ -1208,7 +1364,7 @@ Die Datei [`requirements.txt`](requirements.txt) spezifiziert alle Python-Abhän
 
 Die explizite Versionsspezifikation vermeidet Breaking Changes durch automatische Updates und stellt sicher, dass die Anwendung in verschiedenen Umgebungen identisch funktioniert.
 
-### 3.5.4 Deployment-Prozess
+### 4.5.4 Deployment-Prozess
 
 **Build:**
 ```bash
@@ -1240,44 +1396,9 @@ docker-compose down -v
 ```
 Entfernt auch Volumes (Datenverlust!), nützlich für Clean-State.
 
----
+## 4.6 Performance
 
-## 3.6 Besondere Implementierungsherausforderungen
-
-### 3.6.1 API Rate Limiting
-
-**Problem:**
-Alpha Vantage's Rate Limits (25 Requests/Tag, 5/Minute) machen das Laden von 400 Initial-Tickern unmöglich ohne Multi-Tages-Prozess.
-
-**Implementierte Lösung:**
-- Schutzmechanismen in [`av_connect.py`](src/backend/api_services/av_connect.py) zur Einhaltung der Limits
-- Nutzer-Warnung bei erwartetem Limit-Erreichen
-- Priorisierung: Nur relevante Ticker aktualisieren statt vollständiger Liste
-
-**Alternative Lösungsansätze (nicht implementiert):**
-- Premium API-Key für höhere Limits
-- Alternative Datenquellen (z.B. IEX Cloud) für Bulk-Downloads
-- Daten-Caching und seltene Updates
-
-### 3.6.2 Zeitreihen-spezifische Herausforderungen
-
-**Problem: Data Leakage**
-Bei Zeitreihen darf keine zufällige Train/Test-Aufteilung erfolgen, da dies "Zukunftswissen" in Trainingsdaten einbringt und unrealistisch optimistische Metriken erzeugt (Bergmeir & Benítez, 2012).
-
-**Korrekte Lösung:**
-- **Time-based Split**: Trainingsdaten aus früheren Zeiträumen, Testdaten aus späteren
-- Beispiel: Training auf 2020-2023, Test auf 2024
-- Keine Shuffle-Operation bei Zeitreihen-Daten
-
-**Problem: Feature Engineering mit Lookback**
-Technische Indikatoren (gleitende Durchschnitte, RSI) benötigen historische Fenster, wodurch initiale Zeilen NaN-Werte enthalten.
-
-**Lösungsansätze:**
-- **Dropna**: Entfernung von Zeilen mit NaNs (Datenverlust)
-- **Forward-Fill**: Nicht sinnvoll bei technischen Indikatoren
-- **Minimale Lookback-Period**: Daten erst ab ausreichender Historie verwenden
-
-### 3.6.3 SQLite-Performance bei großen Datensätzen
+### 4.6.1 SQLite-Performance bei großen Datensätzen
 
 **Problem:**
 Die `yf_pricing_history`-Tabelle enthält mehrere Millionen Datensätze, was Abfragen verlangsamen kann.
@@ -1292,7 +1413,7 @@ Die `yf_pricing_history`-Tabelle enthält mehrere Millionen Datensätze, was Abf
 - Pagination bei Frontend-Abfragen
 - Migration zu PostgreSQL für bessere Performance bei Millionen Datensätzen
 
-### 3.6.4 Streamlit Session State vs. Persistenz
+### 4.6.2 Streamlit Session State vs. Persistenz
 
 **Problem:**
 Streamlit's Session State wird bei jedem Neustart zurückgesetzt. Kritische Einstellungen (z.B. ausgewähltes LLM-Modell) gehen verloren.
@@ -1303,16 +1424,17 @@ Streamlit's Session State wird bei jedem Neustart zurückgesetzt. Kritische Eins
 - Temporäre UI-Zustände (Expander, Tabs)
 - Aktuelle Selektionen (Ticker, Algorithmus)
 - Zwischenergebnisse
+- Alphavantage API-Key (aus Sicherheitsgründen)
 
 **system_config.db für:**
 - Gewähltes LLM-Modell
 - Custom Initial-Ticker-Liste
-- ML-Training-Parameter
-- Last-Update-Timestamps
+- Button Zustände
+- Update spezifische Einstellungen
 
 Diese Strategie kombiniert Performance (Session State ist schneller als DB-Zugriffe) mit Persistenz (wichtige Einstellungen überdauern Neustarts).
 
-### 3.6.5 LLM-Integration: Modellgröße vs. Hardware
+### 4.6.3 LLM-Integration: Modellgröße vs. Hardware
 
 **Problem:**
 Moderne LLMs mit Milliarden Parametern erfordern erheblichen RAM (z.B. 7B-Modell ≈ 8-16GB RAM ohne Quantisierung).
@@ -1326,11 +1448,10 @@ Moderne LLMs mit Milliarden Parametern erfordern erheblichen RAM (z.B. 7B-Modell
 - Cloud-basierte LLM-APIs (Datenschutz-Bedenken)
 - Model-Offloading (Teile des Modells auf CPU/GPU verteilen)
 
----
 
-## 3.7 Code-Qualität und Wartbarkeit
+## 4.7 Code-Qualität und Wartbarkeit
 
-### 3.7.1 Error Handling
+### 4.7.1 Error Handling
 
 **Strategie:**
 Alle kritischen Operationen (Datenbankzugriffe, API-Calls, Datei-I/O) sind mit Try-Except-Blöcken abgesichert. Fehler werden geloggt und dem Nutzer über Streamlit's `st.error()` kommuniziert.
@@ -1346,20 +1467,7 @@ except SpecificException as e:
     # Graceful Degradation oder Fallback
 ```
 
-### 3.7.2 Logging
-
-**Verwendung:**
-Python's `logging`-Modul für Backend-Protokollierung mit konfigurierbaren Log-Levels.
-
-**Kritische Logs:**
-- API-Request-Fehler
-- Datenbank-Operationen
-- Daten-Update-Prozesse (Erfolg/Fehler pro Ticker)
-
-**Security:**
-Sensible Daten (API-Keys) werden aus Logs gefiltert.
-
-### 3.7.3 Code-Dokumentation
+### 4.7.2 Code-Dokumentation
 
 **Docstrings:**
 Alle Funktionen in Backend-Modulen enthalten Docstrings nach Google-Style-Konvention:
@@ -1375,7 +1483,7 @@ Komplexe Logik wird inline kommentiert, insbesondere bei:
 - Datenbankschema-spezifischen Operationen
 - Workarounds für Library-Limitierungen
 
-### 3.7.4 Modularität und Wiederverwendbarkeit
+### 4.7.3 Modularität und Wiederverwendbarkeit
 
 Die Implementierung folgt konsequent dem **DRY-Prinzip** (Don't Repeat Yourself):
 - Zentrale Datenzugriffsfunktionen in [`db_functions.py`](src/backend/database/db_functions.py)
@@ -1420,3 +1528,13 @@ Dies reduziert Code-Duplikation und vereinfacht Wartung (Änderungen nur an eine
 
 Hinweis: Alle relativen Pfadangaben in diesem Dokument (z.B. db_functions.py) sind als Hyperlinks konzipiert, die bei Anzeige im Repository direkt zu den entsprechenden Dateien führen.
 
+
+# Probleme: LLM passt nicht gut zur ausgabe ist beschränkt auf Kapazität
+
+# Unsaubere impolementierung mit Load_data und knopf druck
+
+# Alphavntage erfordert Key
+
+# performance nicht gut
+
+# Andere Datenbank maybe besser

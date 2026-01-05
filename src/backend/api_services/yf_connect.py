@@ -18,7 +18,7 @@ def download_yf_pricing_raw_timeperiod(tickers_to_download :list, startdate : st
             start=startdate,
             end=enddate,
             interval=interval_p,
-            auto_adjust=False,
+            auto_adjust=True,
             group_by="column",
         )
 
@@ -65,7 +65,7 @@ def download_yf_pricing_raw_newest(tickers_to_download :list, interval_p : str =
             t, 
             interval=interval_p,
             period=period_p,
-            auto_adjust=False,
+            auto_adjust=True,
             group_by="column",
         )
 
@@ -136,7 +136,7 @@ def download_price_history(
                 start=start,
                 end=end,
                 interval="1d",
-                auto_adjust=False,      # Rohdaten
+                auto_adjust=True,      # Rohdaten
                 group_by="column",
                 progress=False,
             )
