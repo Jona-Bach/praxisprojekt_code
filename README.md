@@ -90,7 +90,7 @@
 
 ---
 
-## 1. Einleitung
+# 1. Einleitung
 
 ### 1.1 Problemstellung
 
@@ -174,7 +174,7 @@ Die Implementierung erfolgt in folgenden Schritten:
 
 --- 
 
-## 2. Grundlagen
+# 2. Grundlagen
 
 Der folgende Abschnitt beschreibt die theoretischen und fachlichen Grundlagen, die für das Verständnis dieses Projektes notwendig sind. Dabei werden sowohl finanzwirtschaftliche Konzepte als auch technische Grundlagen erläutert, die in der Implementierung der Analyseplattform zur Anwendung kommen.
 
@@ -459,7 +459,7 @@ Ein weiterer Vorteil liegt in der Few-Shot-Lernfähigkeit: LLMs können durch ge
 Die vorliegende Plattform nutzt diese Eigenschaften, um Nutzern einen direkten Vergleich zwischen quantitativen ML-Ansätzen und qualitativ-angereicherten LLM-Analysen zu ermöglichen. Dabei bleibt zu beachten, dass LLMs keine deterministischen Prognosen liefern, sondern probabilistische Ausgaben generieren, deren Interpretation Domänenwissen erfordert.
 
 ---
-## 3. Datenbeschreibung
+# 3. Datenbeschreibung
 
 ### 3.1 Datenquellen
 
