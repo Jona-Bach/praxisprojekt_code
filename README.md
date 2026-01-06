@@ -1930,7 +1930,8 @@ Die Data-Seite stellt den zentralen Einstieg in die fachliche Arbeit mit Finanzd
 
 Die Sidebar fungiert als systemnahes Kontrollpanel und bündelt alle datenrelevanten Operationen:
 
-![Data Sidebar - Update-Optionen](rdme_assets/data_sidebar_updates.png)
+![Data Sidebar - Update-Optionen](rdme_assets/data_sidebar1.png)
+
 *Abbildung 5-3: Data-Sidebar mit Update-Funktionen und Upload-Bereich*
 
 **Statusanzeige:**
@@ -1963,7 +1964,7 @@ Die Sidebar fungiert als systemnahes Kontrollpanel und bündelt alle datenreleva
 
 **Upload-Funktionalität:**
 
-![Data Sidebar - Upload-Bereich](rdme_assets/data_sidebar_upload.png)
+![Data Sidebar - Upload-Bereich](rdme_assets/data_sidebar2.png)
 *Abbildung 5-4: Upload-Bereich für nutzereigene Datensätze*
 
 Der Upload-Bereich ("Create your own Database") ermöglicht:
@@ -1983,7 +1984,7 @@ Diese Anordnung unterstützt eine klare Handlungskette:
 
 Die Hauptfläche präsentiert sich mit zwei Tabs: **Analysis** (aktiv) und **Data Settings** (Datenbank-Übersicht).
 
-![Data Analysis - Single Stock](rdme_assets/data_analysis_single.png)
+![Data Analysis - Single Stock](rdme_assets/data_analysis.png)
 *Abbildung 5-5: Single Stock Analysis mit Unternehmensinfos und Kennzahlen*
 
 **Interaktionsablauf im Analysis-Tab:**
@@ -2012,7 +2013,7 @@ Unterer Bereich:
 
 **Schritt 3: Kennzahlen-Dashboard**
 
-![Data Analysis - Kennzahlen](rdme_assets/data_analysis_metrics.png)
+![Data Analysis - Kennzahlen](rdme_assets/data_analysis2.png)
 *Abbildung 5-6: Finanzkennzahlen-Dashboard mit Market Cap, PE-Ratio, ROE, etc.*
 
 Das Kennzahlen-Dashboard zeigt in zwei Reihen à drei Metriken:
@@ -2119,7 +2120,7 @@ Das Machine Learning Studio transformiert klassische ML-Workflows in eine GUI-ge
 
 Die Sidebar fungiert als zentrales Konfigurationspanel für das Modelltraining:
 
-![ML Sidebar - Einstellungen](rdme_assets/ml_sidebar_settings.png)
+![ML Sidebar - Einstellungen](rdme_assets/ml_sidebar.png)
 *Abbildung 5-7: ML-Sidebar mit Algorithmus-, Datenquellen- und Training-Konfiguration*
 
 **Konfigurationsbereiche:**
@@ -2143,7 +2144,7 @@ Die Sidebar fungiert als zentrales Konfigurationspanel für das Modelltraining:
 
 **3. Training-Parameter**
 
-![ML Sidebar - Training-Parameter](rdme_assets/ml_sidebar_training.png)
+![ML Sidebar - Training-Parameter](rdme_assets/ml_sidebar.png)
 *Abbildung 5-8: Test-Set-Größe, Feature-Scaling und Zeitreihenmodus*
 
 - **Test Set Größe:** Slider von 0.10 bis 0.50 (Beispiel: 0.20 = 20%)
@@ -2185,7 +2186,7 @@ Expander "📋 Show DataFrame" (standardmäßig collapsed):
 
 **3. Feature- und Target-Auswahl**
 
-![ML Main - Feature/Target Selection](rdme_assets/ml_main_feature_target.png)
+![ML Main - Feature/Target Selection](rdme_assets/ml_settings.png)
 *Abbildung 5-9: Feature- und Target-Auswahl mit Data-Leakage-Warnung*
 
 Zwei zentrale Komponenten:
@@ -2209,7 +2210,7 @@ Diese Warnung (in gelb/olive dargestellt) reduziert methodische Fehler für weni
 
 **4. Prognosehorizont (Zukunfts-Target)**
 
-![ML Main - Forecast Horizon](rdme_assets/ml_main_forecast_horizon.png)
+![ML Main - Forecast Horizon](rdme_assets/ml_settings.png)
 *Abbildung 5-10: Vorhersagehorizont-Konfiguration mit Zeitspalten-Auswahl*
 
 Expander "⏩ Vorhersagehorizont (Zukunfts-Target)":
@@ -2330,7 +2331,7 @@ Der LLM Playground ergänzt klassische ML-Workflows durch sprachbasierte Analyse
 
 Die Sidebar gliedert sich in zwei Hauptbereiche:
 
-![LLM Sidebar - Ollama Settings](rdme_assets/llm_sidebar_ollama.png)
+![LLM Sidebar - Ollama Settings](rdme_assets/llm_sidebar.png)
 *Abbildung 5-11: Ollama-Konfiguration mit Verbindungstest und Modellverwaltung*
 
 **⚙️ Ollama Settings:**
@@ -2358,7 +2359,7 @@ Diese Flexibilität ermöglicht:
 
 **📊 Data Source:**
 
-![LLM Sidebar - Data Source](rdme_assets/llm_sidebar_datasource.png)
+![LLM Sidebar - Data Source](rdme_assets/llm_sidebar.png)
 *Abbildung 5-12: Datenquellen-Auswahl im LLM Playground*
 
 Identisch zur ML-Seite:
@@ -2369,7 +2370,7 @@ Identisch zur ML-Seite:
 
 Die Hauptfläche des LLM Playgrounds folgt einem ähnlichen Aufbau wie die ML-Seite, fokussiert jedoch auf die Vorbereitung für LLM-basierte Analysen:
 
-![LLM Main - Feature & Target Selection](rdme_assets/llm_main_feature_target.png)
+![LLM Main - Feature & Target Selection](rdme_assets/llm_settings.png)
 *Abbildung 5-13: Feature/Target-Auswahl und Prediction Configuration im LLM Playground*
 
 **🎯 Feature & Target Selection:**
@@ -2486,7 +2487,7 @@ Der Assistant stellt ein ergänzendes Ergebnis dar, das weniger auf Datenanalyse
 **Link (Code):**  
 [`src/frontend/st/pages/4 Assistant.py`](src/frontend/st/pages/4%20Assistant.py)
 
-![Assistant - Chat Interface](rdme_assets/assistant_chat.png)
+![Assistant - Chat Interface](rdme_assets/assistant.png)
 *Abbildung 5-14: Assistant mit Verbindungsstatus und Chat-Interface*
 
 ### 5.6.1 Funktionsumfang und Interaktion
@@ -2565,7 +2566,7 @@ Die Settings-Seite ist aus Ergebnis-Sicht ein zentraler Baustein, da sie die App
 **Link (Code):**  
 [`src/frontend/st/pages/5 Settings.py`](src/frontend/st/pages/5%20Settings.py)
 
-![Settings - Overview](rdme_assets/settings_overview.png)
+![Settings - Overview](rdme_assets/settings.png)
 *Abbildung 5-15: Settings-Übersicht mit expandierbaren Bereichen*
 
 ### 5.7.1 Strukturierung in Expander-Bereiche
@@ -2772,37 +2773,6 @@ geeignet ist, jedoch bewusst **nicht** für:
 - Kritische Investitionsentscheidungen ohne zusätzliche Validierung
 
 ---
-
-## 5.9 Hinweise zur finalen Dokumentation
-
-Die in diesem Kapitel verwendeten Screenshots befinden sich im Ordner `rdme_assets/` und sind wie folgt referenziert:
-
-**Startseite & Navigation:**
-- `start.png` - Startseite mit Welcome/Setup-Tabs
-- `pages.png` - Sidebar-Navigation
-
-**Data-Seite:**
-- `data_sidebar_updates.png` - Update-Funktionen
-- `data_sidebar_upload.png` - Upload-Bereich
-- `data_analysis_single.png` - Single Stock Analysis
-- `data_analysis_metrics.png` - Kennzahlen-Dashboard
-
-**Machine Learning:**
-- `ml_sidebar_settings.png` - Algorithmus und Datenquelle
-- `ml_sidebar_training.png` - Training-Parameter
-- `ml_main_feature_target.png` - Feature/Target-Auswahl
-- `ml_main_forecast_horizon.png` - Forecast Horizon
-
-**LLM Playground:**
-- `llm_sidebar_ollama.png` - Ollama-Konfiguration
-- `llm_sidebar_datasource.png` - Datenquelle
-- `llm_main_feature_target.png` - Feature/Target & Prediction Config
-
-**Assistant & Settings:**
-- `assistant_chat.png` - Chat-Interface
-- `settings_overview.png` - Settings-Bereiche
-
-Für die finale Berichtsversion sind alle Screenshots vorhanden und korrekt eingebunden. Die konsistente Nummerierung (Abbildung 5-1 bis 5-15) ermöglicht klare Referenzierung im Text.
 
 # 6. Diskussion
 
