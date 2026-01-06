@@ -11,6 +11,7 @@
     - [1.3.2 Datengrundlage](#132-datengrundlage)
     - [1.3.3 Softwarearchitektur](#133-softwarearchitektur)
     - [1.3.4 Entwicklungsprozess](#134-entwicklungsprozess)
+
 - [2. Grundlagen](#2-grundlagen)
   - [2.1 Finanzmarktgrundlagen](#21-finanzmarktgrundlagen)
     - [2.1.1 Grundlegende Begriffe](#211-grundlegende-begriffe)
@@ -25,6 +26,7 @@
     - [2.3.1 Grundlagen von Large Language Models](#231-grundlagen-von-large-language-models)
     - [2.3.2 Ollama als lokale LLM-Infrastruktur](#232-ollama-als-lokale-llm-infrastruktur)
     - [2.3.3 LLMs im Finanzkontext](#233-llms-im-finanzkontext)
+
 - [3. Datenbeschreibung](#3-datenbeschreibung)
   - [3.1 Datenquellen](#31-datenquellen)
   - [3.2 Datenumfang](#32-datenumfang)
@@ -32,6 +34,7 @@
   - [3.4 Datenaufbereitung](#34-datenaufbereitung)
   - [3.5 Datenqualität und Limitationen](#35-datenqualität-und-limitationen)
   - [3.6 Nutzerbereitgestellte Daten](#36-nutzerbereitgestellte-daten)
+
 - [4. Implementierung](#4-implementierung)
   - [4.1 Systemarchitektur und Technologie-Stack](#41-systemarchitektur-und-technologie-stack)
     - [4.1.1 Architekturkonzept](#411-architekturkonzept)
@@ -86,6 +89,59 @@
     - [4.7.1 Error Handling](#471-error-handling)
     - [4.7.2 Code-Dokumentation](#472-code-dokumentation)
     - [4.7.3 Modularität und Wiederverwendbarkeit](#473-modularität-und-wiederverwendbarkeit)
+
+- [5. Resultate (Dashboard)](#5-resultate-dashboard)
+  - [5.1 Ergebnisübersicht: Was ist entstanden?](#51-ergebnisübersicht-was-ist-entstanden)
+  - [5.2 Nutzererlebnis: Einstieg und typischer User Flow](#52-nutzererlebnis-einstieg-und-typischer-user-flow)
+    - [5.2.1 Erster Einstieg (Onboarding)](#521-erster-einstieg-onboarding)
+    - [5.2.2 Navigationsprinzip und Seitenübersicht](#522-navigationsprinzip-und-seitenübersicht)
+    - [5.2.3 Typischer Arbeitsablauf](#523-typischer-arbeitsablauf)
+  - [5.3 Data-Seite: Analyse- und Datenmanagement als Dashboard-Erlebnis](#53-data-seite-analyse--und-datenmanagement-als-dashboard-erlebnis)
+    - [5.3.1 Sidebar: Kontrollpanel für Datenupdates und Datenimport](#531-sidebar-kontrollpanel-für-datenupdates-und-datenimport)
+    - [5.3.2 Analyse-Tab: Interaktive Exploration einzelner Symbole](#532-analyse-tab-interaktive-exploration-einzelner-symbole)
+    - [5.3.3 Compared Stock Analysis: Mehrfachvergleich im selben Dashboard](#533-compared-stock-analysis-mehrfachvergleich-im-selben-dashboard)
+    - [5.3.4 Tab „Data Settings": Transparenz über Datenhaltung](#534-tab-data-settings-transparenz-über-datenhaltung)
+  - [5.4 Machine Learning Studio: Ergebnisorientiertes Training im Dashboard](#54-machine-learning-studio-ergebnisorientiertes-training-im-dashboard)
+    - [5.4.1 Sidebar als Trainings-Konsole](#541-sidebar-als-trainings-konsole)
+    - [5.4.2 Hauptfläche: Datenkontrolle und Modellbildung](#542-hauptfläche-datenkontrolle-und-modellbildung)
+    - [5.4.3 Ergebnisdarstellung: Metriken und Visualisierung](#543-ergebnisdarstellung-metriken-und-visualisierung)
+    - [5.4.4 Modell-Speicherung und Saved Models](#544-modell-speicherung-und-saved-models)
+  - [5.5 LLM Playground: Datenbasierte Analyse als Text-Resultat](#55-llm-playground-datenbasierte-analyse-als-text-resultat)
+    - [5.5.1 Sidebar: Ollama-Konfiguration und Datenquelle](#551-sidebar-ollama-konfiguration-und-datenquelle)
+    - [5.5.2 Hauptfläche: Feature/Target-Auswahl und Analysekonfiguration](#552-hauptfläche-featuretarget-auswahl-und-analysekonfiguration)
+    - [5.5.3 Analyse starten und Ergebnisdarstellung](#553-analyse-starten-und-ergebnisdarstellung)
+  - [5.6 Assistant: Nutzerunterstützung als Dashboard-Komponente](#56-assistant-nutzerunterstützung-als-dashboard-komponente)
+    - [5.6.1 Funktionsumfang und Interaktion](#561-funktionsumfang-und-interaktion)
+    - [5.6.2 Chat-Interface](#562-chat-interface)
+    - [5.6.3 Typische Use Cases](#563-typische-use-cases)
+  - [5.7 Settings: Konfiguration als Ergebnis für Wartbarkeit und Steuerbarkeit](#57-settings-konfiguration-als-ergebnis-für-wartbarkeit-und-steuerbarkeit)
+    - [5.7.1 Strukturierung in Expander-Bereiche](#571-strukturierung-in-expander-bereiche)
+    - [5.7.2 Global Settings](#572-global-settings)
+    - [5.7.3 Data Settings](#573-data-settings)
+    - [5.7.4 Machine Learning Settings](#574-machine-learning-settings)
+    - [5.7.5 Assistant Settings](#575-assistant-settings)
+  - [5.8 Zusammenfassung der Ergebnisse und Bewertung aus Nutzersicht](#58-zusammenfassung-der-ergebnisse-und-bewertung-aus-nutzersicht)
+    - [5.8.1 Erreichte Anforderungen](#581-erreichte-anforderungen)
+    - [5.8.2 Stärken des Dashboards aus Nutzersicht](#582-stärken-des-dashboards-aus-nutzersicht)
+    - [5.8.3 Grenzen und beobachtbare Einschränkungen](#583-grenzen-und-beobachtbare-einschränkungen)
+    - [5.8.4 Ergebnischarakter](#584-ergebnischarakter)
+
+- [6. Diskussion](#6-diskussion)
+  - [6.1 Interpretation der Resultate: Zielerreichung und Funktionsumfang](#61-interpretation-der-resultate-zielerreichung-und-funktionsumfang)
+    - [6.1.1 Übergeordnetes Projektziel](#611-übergeordnetes-projektziel)
+    - [6.1.2 Erreichte Kernergebnisse](#612-erreichte-kernergebnisse)
+    - [6.1.3 Gesamtbewertung der Zielerreichung](#613-gesamtbewertung-der-zielerreichung)
+    - [6.1.4 Abgrenzung zu kommerziellen Lösungen](#614-abgrenzung-zu-kommerziellen-lösungen)
+  - [6.2 Threats to Validity: Limitationen und Einschränkungen](#62-threats-to-validity-limitationen-und-einschränkungen)
+    - [6.2.1 Datenqualität und -verfügbarkeit](#621-datenqualität-und--verfügbarkeit)
+    - [6.2.2 Machine Learning Methodik](#622-machine-learning-methodik)
+    - [6.2.3 LLM-Integration](#623-llm-integration)
+    - [6.2.4 Performance und Skalierbarkeit](#624-performance-und-skalierbarkeit)
+    - [6.2.5 Usability und Fehleranfälligkeit](#625-usability-und-fehleranfälligkeit)
+    - [6.2.6 Zusammenfassung der Threats to Validity](#626-zusammenfassung-der-threats-to-validity)
+  - [6.3 Ausblick und Verbesserungspotenziale](#63-ausblick-und-verbesserungspotenziale)
+  - [6.4 Fazit der Diskussion](#64-fazit-der-diskussion)
+
 - [Literatur](#literatur)
 
 ---
@@ -2020,7 +2076,7 @@ Das Kennzahlen-Dashboard zeigt in zwei Reihen à drei Metriken:
 
 Obere Reihe:
 - **Market Capitalization:** "41.25 Mrd."
-- **PE-Ratio:** "3.18 Tsd."
+- **PE-Ratio:** "3.18"
 - **Price/Book:** "6.11"
 
 Untere Reihe:
@@ -3273,15 +3329,6 @@ Insgesamt stellt FinSight einen erfolgreichen Proof-of-Concept dar, der zeigt, w
 Hinweis: Alle relativen Pfadangaben in diesem Dokument (z.B. db_functions.py) sind als Hyperlinks konzipiert, die bei Anzeige im Repository direkt zu den entsprechenden Dateien führen.
 
 
-# Probleme: LLM passt nicht gut zur ausgabe ist beschränkt auf Kapazität
-
-# Unsaubere impolementierung mit Load_data und knopf druck
-
-# Alphavntage erfordert Key
-
-# performance nicht gut
-
-# Andere Datenbank maybe besser
 
 
 
