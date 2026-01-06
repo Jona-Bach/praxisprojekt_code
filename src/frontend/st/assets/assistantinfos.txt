@@ -1,11 +1,478 @@
-This Dashboard was created as part of the "Praxisprojekt" by: Jonathan Bach for the TH-Köln.
-You can find Settings regarding Data, API, the Assistant and more on the left on the "Settings" Page
-It is hardly advised to use Local Ollama with this Dashboard. You can activate it in the "Global Settings"
-You can Analyze and Compare Stocks, create or cse Machine Learning Algorithms, Handle and add own Data, and use Large Language Models for financial analysis.
-You can see your Databases under the "Data" Page!
-If you have problems connecting please reread the Setup Guide or look into the "help" page!
-You can upload and convert your own data into a database in the sidebar on the "Data" Page. BE AWARE That only "csv, xlsx and xls" are accepted!
-You can download new Ticker Data in the sidebar of the "Data" Page.
-If your data seems outdated, use the "Update Data" Button in the sidebar of the "Data" Page.
-If you are unhappy with the answers of the Assistant you can change the Model used in the Settings!
-If something is not loading right away, try to reload the page! Sometimes it takes some time to update
+FinSight Assistant Knowledge Base (for in-app help / “RAG”-style guidance)
+Version: 1.0
+Language: English
+Scope: Help users navigate and use the FinSight Streamlit application (finance-focused data + ML + LLM analysis).
+Tone: Helpful, clear, step-by-step. Prefer short instructions. Ask follow-up questions only when needed.
+Safety: Do not provide individualized investment advice. Explain functionality and general ML/LLM usage only.
+
+
+============================================================
+1) What FinSight is
+============================================================
+FinSight is a Streamlit application that helps users work with financial datasets:
+- Use built-in datasets stored in the app’s databases
+- Upload their own CSV/Excel datasets into the database
+- Download additional stock data through integrated functions (optionally via Alpha Vantage)
+- Analyze and visualize data
+- Train machine-learning models (scikit-learn)
+- Run LLM-based analyses via Ollama (locally or in Docker)
+
+Deployment options:
+- Local run (Streamlit + local Ollama if installed)
+- Docker deployment (two containers):
+  1) FinSight app container
+  2) Ollama container (for LLMs)
+  Optionally, in Docker you can still connect to a host/local Ollama instance depending on settings.
+
+Key external services/tools:
+- scikit-learn: ML models (regression + classification)
+- Ollama: LLM inference and model downloads
+- Alpha Vantage: optional API data for downloading and updating some datasets
+
+
+============================================================
+2) App structure (Pages)
+============================================================
+FinSight has these major pages:
+A) Home / Start
+B) Data
+C) Machine Learning (Studio) + Saved Models tab
+D) LLM Playground
+E) Assistant (chat)
+F) Settings
+
+
+============================================================
+3) Home / Start page
+============================================================
+What users see:
+- A welcome overview
+- A Setup section with essential instructions (German + English)
+
+Assistant guidance:
+- If a user is confused, direct them to the Setup instructions first.
+- Home contains no other core functionality.
+
+
+============================================================
+4) Data page (Data management + analysis)
+============================================================
+4.1 Sidebar controls (Data page)
+- “Last manual data update” status card: shows when the last manual update ran (or “-” if none this run).
+- “Update All Data”: re-download/update all data for all symbols in the databases (excluding user-created tables).
+  After updating, the app automatically runs a data-processing script to create/refresh processed tables.
+- “Update Processed Data”: reruns processing if the processing step failed or was interrupted.
+- Initial tickers dropdown: choose a predefined stock symbol to update.
+  - “Update Single Ticker Data”: updates one selected symbol only.
+- Search & download new symbols:
+  - “Search Stock”: find a ticker symbol
+  - “Download Stock Data”: download data for that symbol
+  Notes:
+  - Default max history is 5 years (adjustable in Settings).
+  - May require a valid Alpha Vantage API key.
+  - Supports stocks in the relevant (US) exchange context, depending on provider coverage.
+- Upload user data into database:
+  - “Upload CSV or Excel File” + choose table name
+  - Conflict handling if a table name exists:
+    - Fail: stop import
+    - Replace: delete old table, insert new table
+    - Append: add new rows to existing table
+  - “Import file into database”: finalizes the import
+
+4.2 Data page tabs
+Tab 1: Analysis
+- Select a stock/ticker from a searchable dropdown (around 400 supported for analysis).
+- If available in the DB, show company metadata:
+  - Symbol, Short Name, Country, Sector, Industry, Website, Business Summary
+- Show key metrics (when available):
+  - Market Cap, PE ratio, Price/Book, ROE, Profit Margin, Beta
+  - Also show when these metrics were captured (data timestamp / snapshot)
+- Time-series visualization:
+  - Choose a metric + a start date
+  - OHLCV visualization available; chart is interactive (zoom and inspect)
+- Compared Stock Analysis:
+  - Choose 2+ stocks, pick start date, compare close prices in one chart
+  - Show selected metrics for each (e.g., Market Cap, PE, Price/Book) for quick comparison
+
+Tab 2: Database overview
+- View built-in tables and user-created tables
+- Built-in datasets often include:
+  - Alpha Vantage raw KPI data (company metrics)
+  - Alpha Vantage raw pricing (OHLCV + adjusted close)
+  - Processed versions of the above tables
+Performance note:
+- With very large datasets, loading may take longer. Encourage patience and using filters/limited views if available.
+
+User-created tables section:
+- Select a user table from a dropdown
+- Show table name and number of rows
+- Display the table contents
+
+Assistant guidance:
+- If “Update All Data” is slow: explain it updates all DB symbols and then processes data.
+- If processing fails: recommend “Update Processed Data”.
+- If user can’t download data: check Alpha Vantage key (Settings) and confirm ticker validity/provider support.
+- If user needs older data than 5 years: explain the limit and where to change it (Settings → Data Settings).
+
+
+============================================================
+5) Machine Learning (Studio) page
+============================================================
+Purpose:
+- Train ML models on available data sources
+- Save trained models automatically for later reuse
+- Separate “Saved Models” tab to manage and use stored models
+
+5.1 Sidebar settings (training)
+Algorithm options:
+1) Linear Regression
+2) Decision Tree
+3) Random Forest
+4) Classification (binary 0/1)
+5) Direction Classification (predict whether price goes up (1) or down (0))
+
+Data Source selection (required):
+- Price History (large Yahoo Finance historical dataset)
+- Single Stock Price (one ticker dataset from yf_pricing_raw, including downloaded tickers)
+- Alpha Vantage (processed tables):
+  - alphavantage_pricing_processed
+  - alphavantage_processed_kpi
+- Alpha Vantage (Combined): merges pricing + KPI features
+- User Tables: choose from imported user tables
+
+Other settings:
+- Test set size: slider 0.10 to 0.50
+- “Scale Features (StandardScaler)”: standardize features (usually ON)
+- Time-Series Mode:
+  - Creates lag features from the chosen target variable
+  - When enabled, manual feature selection is mostly overridden and training focuses on the target’s lagged values
+- “Train Model”: starts training
+
+5.2 Main area (training workflow)
+- Shows whether a DataFrame loaded successfully
+  - If no data returns due to missing data source or restrictive filters: show warning
+- Displays dataset stats:
+  - number of rows, columns
+  - “time series found”: app detected a date/time column usable for time-based features
+  - User can manually adjust which time column to use
+
+Feature/Target selection:
+- Feature Columns (X): input variables
+- Target Column (y): what to predict
+
+Forecasting setup:
+- “Future Target” column selection (ideally a time/date column; needed for future forecasting)
+- Forecast Horizon options:
+  - 1 Day
+  - 3 Weeks
+  - 3 Months
+  - 1 Year
+Technical meaning:
+- The target is shifted forward by the horizon so the model learns to predict the future value.
+- Shifting can create missing values at the boundaries; those rows may be dropped/handled.
+
+Data leakage warning:
+If the same column is chosen as both feature and target without a forecast shift:
+- Warning may appear:
+  “Note: The target column is also selected as a feature without a forecast-horizon shift. This can lead to data leakage...”
+Explain:
+- This can inflate performance because the model sees the answer.
+- Using forecast shift or Time-Series Mode typically reduces this risk.
+
+Built-in training guards / common system messages:
+- Minimum dataset size check (example):
+  “The loaded dataset has only 26 rows. For a meaningful model, at least 50 rows are required …”
+  Meaning:
+  - Too few rows after filtering or shifting; choose more data, reduce filters, or change settings.
+  - Minimum required rows can be configured in Settings → Machine Learning Settings.
+- No time column detected (common for classification datasets):
+  “⚠️ No suitable time column detected. Future target (shift) is disabled.”
+  Meaning:
+  - Forecast shifting is disabled because no time column was found. Not always an error.
+- Training row cap for performance (example):
+  “The dataset has 2320110 rows – only the first 20000 rows will be used for training.”
+  Meaning:
+  - App limits training size to avoid long runtimes; adjustable in Settings → Machine Learning Settings.
+
+Training split info:
+- Example:
+  “Training data prepared: X_train=(444, 4), X_test=(445, 4)”
+
+After training:
+- Model is automatically saved
+- App shows save path + file name
+- Typical metrics:
+  - RMSE, MSE, R² (for regression)
+- Visualization: y_true vs y_pred comparison
+- For classification:
+  - Confusion matrix may be shown
+  - Correlation visualization may be shown
+
+Assistant guidance:
+- If results are “too good”: mention leakage risk and suggest forecast shift or time-series mode.
+- If model quality is poor: suggest trying different features, target choice, algorithm type, scaling, larger dataset.
+- If training is slow: reduce rows, increase caps cautiously, or choose a smaller dataset.
+
+
+============================================================
+6) Saved Models tab (inside Machine Learning)
+============================================================
+Overview section:
+- Lists each saved model with metadata:
+  - Algorithm
+  - Data source
+  - Target variable
+  - Forecast horizon
+  - Time-series mode enabled/disabled
+  - If time-series mode: number of lags + lag base
+  - Number of features
+  - Save timestamp
+
+Model selection:
+- Choose a saved model to view details
+- “Download Model”: downloads the model file to the local download folder
+- Shows feature columns + data types (float64/int64 etc.) and numeric formatting hints
+
+Try model on current data:
+- Expand “Try the model with current data”
+- Load a dataset (via sidebar)
+- Choose how many latest rows to predict on
+Important:
+- The dataset used for prediction must match the table type/column structure used during training.
+
+Model cleanup:
+- Models can be deleted in Settings → Machine Learning Settings (to free space).
+
+Assistant guidance:
+- If predictions fail: likely column mismatch; instruct user to use the same data source schema.
+- If user wants to reuse model externally: emphasize matching feature order/types and any preprocessing (scaler).
+- If too many models: delete older ones in Settings.
+
+
+============================================================
+7) LLM Playground page
+============================================================
+Purpose:
+- Let users analyze loaded data with a Large Language Model (LLM) via Ollama.
+
+Prerequisite:
+- A running Ollama instance:
+  - Local machine OR Docker container
+
+7.1 Sidebar: LLM connection source
+Connection options:
+- “Container Ollama”:
+  - Works when running in Docker and the app can reach the Ollama container
+- “Host”:
+  - Lets a Dockerized app reach a locally installed Ollama on the host (if configured/networked)
+- “Local Ollama”:
+  - For non-Docker runs using local Ollama
+
+“Test Connection”:
+- Confirms whether the connection works
+- Success message or error message shown
+
+7.2 LLM model name and loading
+- Default model: “mathstral:7b” (recommended for this use case)
+- User can change to any model available in Ollama
+- “Load Model”: downloads the model if not present locally
+Timeout note:
+- The timeout (default 120 seconds) limits max response duration.
+- For first-time model downloads, user should usually increase timeout, because downloads can take longer.
+
+Option:
+- “Auto-load on analysis” (default ON):
+  - If model missing, it will be pulled automatically when analysis starts.
+
+7.3 Data selection + analysis modes
+Data source selection works similarly to ML page.
+Once loaded:
+- Show dataset overview:
+  - row count, column count, number of numeric columns
+- Optionally view the DataFrame
+
+Choose:
+- Feature columns
+- Target variable
+
+Prediction/analysis modes:
+- Regression (predict numeric value)
+- Classification (predict category)
+- Trend Analysis (direction up/down)
+- Free Analysis (open-ended)
+
+Data sample size:
+- Number of last rows passed to the LLM
+- Max is 50 rows to keep prompts manageable
+Tip:
+- Use 10–50 rows depending on table size and desired context.
+
+Custom prompt:
+- User may add extra instructions
+- App also builds a larger system prompt that includes:
+  - selected data rows
+  - summary statistics (mean/min/max per column)
+  - task instructions + user custom prompt
+- The full generated prompt is viewable in the app (main template is configurable only in code).
+
+Output:
+- LLM Analysis Result text
+- Details view includes:
+  - model used, prediction type, data source, features/target, runtime, sample size
+
+Assistant guidance:
+- If analysis errors: verify Ollama connection and model availability.
+- If output is weak: suggest adjusting sample size, choosing clearer target/features, or writing a more specific custom prompt.
+- If responses time out: increase timeout or use a smaller model/sample size.
+
+
+============================================================
+8) Assistant page (in-app chat)
+============================================================
+Purpose:
+- A digital helper that answers questions about FinSight and provides general tips for model training and data usage.
+
+Features:
+- Reset chat history via sidebar
+- Shows current assistant model (default: “phi3:mini”)
+- Assistant model can be changed in Settings
+
+Assistant behavior guidelines:
+- Focus on “how to use the app” and “where to click”
+- Provide troubleshooting steps for common errors
+- Do not fabricate capabilities; if something is not supported, say so and suggest alternatives
+- Avoid investment advice; focus on software usage and general educational guidance
+
+
+============================================================
+9) Settings page (central configuration)
+============================================================
+Settings categories:
+A) Global Settings
+B) Data Settings
+C) Machine Learning Settings
+D) Assistant Settings
+
+9.1 Global Settings
+- Toggle “Local Ollama”:
+  - For non-Docker usage or to force local Ollama usage
+  - Shows connection URL (default http://localhost:11434)
+  - Shows connection status (requires Ollama installed + running)
+- Reset settings:
+  - Fully resets configuration, including saved settings in DB
+- Save Local Ollama as default:
+  - Persist as the default for next app start
+  - Reset removes this default
+- Alpha Vantage API Key input:
+  - Required for some download/update functions
+
+9.2 Data Settings
+- Clear Table:
+  - Delete a chosen table (Yahoo Finance tables excluded)
+  - Protected with double confirmation
+- Initial tickers management:
+  - Trigger auto-load of initial ticker list (approx. 400 symbols) into Alpha Vantage tables
+  - Display current list
+  - Create custom list:
+    - pick from predefined list
+    - add custom tickers (comma-separated)
+    - save via “Choose as New initial Tickers”
+    - persists across restarts and used for future updates
+  - Add or remove individual tickers
+  - “Delete Custom Initial Tickers”: revert to standard default list
+- Analysis earliest date:
+  - Set earliest date for price data loaded on Data page (default: 2020-01-01)
+  - Can save changes or reset to default
+
+9.3 Machine Learning Settings
+- Show saved model overview including file size and save timestamp
+- Delete saved models permanently
+- Configure training limits:
+  - Minimum required rows for training
+  - Maximum number of training rows (cap for large datasets)
+- Save or reset to defaults
+
+9.4 Assistant Settings
+- Choose assistant source (local Ollama vs container/other)
+  - If “Local Ollama” is enabled in Global Settings, it overrides container options.
+- Assistant model management:
+  - Recommended models list includes typical sizes and use cases
+  - Select a recommended model (default: phi3:mini)
+  - Or manually type a model name
+  - Status shows whether model is available in configured Ollama environment
+  - If not available and connection works, allow pulling/downloading the model
+
+
+============================================================
+10) Common user questions → Suggested assistant answers
+============================================================
+Q: “I can’t download stock data.”
+A:
+1) Check Settings → Global Settings → Alpha Vantage API Key is set.
+2) Confirm ticker symbol exists and is supported in the provider’s (US) context.
+3) If the app limits to 5 years, explain the limit and how to change it in Settings → Data Settings.
+
+Q: “Update All Data takes very long.”
+A:
+- It updates all symbols in the DB and then runs processing to refresh processed tables.
+- Suggest updating a single ticker if only one symbol is needed.
+- If processing fails, use “Update Processed Data”.
+
+Q: “My model training fails due to too few rows.”
+A:
+- Reduce filters, choose a broader dataset, or reduce forecast horizon shift.
+- Explain the minimum rows guard and that it can be adjusted in Settings → Machine Learning Settings.
+
+Q: “The app says no time column detected.”
+A:
+- For forecasting/shift it needs a date/time column.
+- Suggest selecting a correct time column manually (date/timestamp/timeframe).
+- Note that for some classification tasks it may be expected.
+
+Q: “Predictions look unrealistically good.”
+A:
+- Warn about data leakage (target also used as feature).
+- Suggest setting a forecast horizon (shift) or using time-series mode.
+- Ensure train/test split is done correctly and features make sense.
+
+Q: “LLM Playground can’t connect.”
+A:
+- Use “Test Connection”.
+- Verify Ollama is running.
+- If Docker: choose correct source (Container Ollama / Host / Local).
+- Check model name is correct and available; pull if missing.
+- If timeouts occur, increase timeout and/or use a smaller model.
+
+Q: “My saved model doesn’t work on current data.”
+A:
+- The prediction dataset must match training schema (columns, names, types).
+- Load the same data source type used during training.
+- Verify selected feature columns exist and scaling expectations match.
+
+
+============================================================
+11) Assistant response rules (must-follow)
+============================================================
+- Be explicit about which page/tab/setting to use.
+- Prefer numbered steps for instructions.
+- If a user describes an error message, repeat the relevant portion and map it to likely causes and fixes.
+- Never claim access to private user data beyond what the app shows.
+- Do not provide investment recommendations.
+- If uncertain, ask for:
+  - Which page they are on (Data / ML / LLM / Settings)
+  - Which data source and ticker/table they selected
+  - The exact error message shown
+
+
+============================================================
+12) Glossary (quick)
+============================================================
+- Ticker/Symbol: stock identifier (e.g., AAPL)
+- OHLCV: Open, High, Low, Close, Volume
+- KPI: Key performance indicators / company metrics
+- Forecast Horizon: how far ahead the target is shifted (e.g., 3 months)
+- Data leakage: target information accidentally included in features
+- Time-Series Mode: lag-based forecasting using past values of the target
+- Ollama: local LLM runner + model downloader
+- Container Ollama: Ollama running in Docker
+- Host Ollama: Ollama running on host machine, accessible from container

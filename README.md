@@ -1157,17 +1157,6 @@ Gespeichert werden neben dem Modell auch Metadaten, u.a.:
 
 Damit ist eine spätere Wiederverwendung (Inference) grundsätzlich möglich, sofern die Input-Features wieder im gleichen Schema vorliegen.
 
-
-#### Grenzen und bekannte Einschränkungen
-
-- **Kein Hyperparameter-Tuning:** Modelle werden mit Standard-Settings trainiert (z.B. RandomForest mit fixen `n_estimators`).
-- **Kein Cross-Validation:** Aktuell nur Train/Test-Split; Ergebnisse können je nach Split variieren.
-- **NaN-Drop kann Daten stark reduzieren:** Bei vielen fehlenden Werten kann nach Preprocessing nur ein kleiner Rest übrig bleiben.
-- **Feature-Explosion bei One-Hot-Encoding:** Sehr viele Kategorien können zu großen, sparsamen Feature-Matrizen führen.
-- **Zeitreihen-Validierung vereinfacht:** Der Zeitreihenmodus verhindert Shuffle, ersetzt aber kein professionelles Walk-Forward/Backtesting.
-- **Rate-Limits / Datenqualität:** Je nach Datenquelle können Lücken, Ausreißer oder API-Limits das Training beeinflussen.
-- **Daten-Leakage möglich:** Wenn Target und Features nicht sauber getrennt sind (Playground warnt in typischen Fällen, kann aber nicht alle Leaks erkennen).
-
 ### 4.3.3 LLM-Integration
 
 Die LLM-Funktionalität ist in der aktuellen Version **direkt im Streamlit-Frontend** implementiert und befindet sich unter  
@@ -1424,20 +1413,6 @@ Nach erfolgreicher Analyse werden folgende Metadaten angezeigt:
 - Sample-Größe
 
 Der generierte Prompt kann optional eingesehen werden, um die LLM-Anfrage nachzuvollziehen.
-
-
-#### Grenzen und bekannte Einschränkungen
-
-- **Modellabhängige Qualität:** Die Vorhersagequalität hängt stark vom gewählten Ollama-Modell ab. Kleinere Modelle (<7B Parameter) können bei komplexen Finanzanalysen limitiert sein.
-- **Keine Echtzeitverarbeitung:** Streaming-Responses werden aktuell nicht unterstützt (`stream=False`), was bei großen Antworten zu Wartezeiten führen kann.
-- **Prompt-Engineering manuell:** Die automatisch generierten Prompts sind generisch; für spezialisierte Anwendungsfälle sind manuelle Anpassungen nötig.
-- **Keine Validierung der LLM-Ausgaben:** Die Antworten werden nicht automatisch auf Plausibilität oder Struktur geprüft. Halluzinationen sind möglich.
-- **Kontextlänge limitiert:** Durch die Sample-Größe (max. 50 Zeilen) können nicht alle Datenmuster erfasst werden. Bei sehr langen Zeitreihen gehen Informationen verloren.
-- **Keine historische Speicherung:** Generierte Analysen werden nicht persistent gespeichert; ein erneutes Abrufen erfordert eine neue Anfrage.
-- **Ressourcenabhängigkeit:** Ollama benötigt ausreichend RAM und ggf. GPU-Ressourcen. Bei unzureichender Hardware können Timeouts oder OOM-Fehler auftreten.
-- **Kein Multi-Turn-Dialog:** Aktuell wird pro Anfrage ein isolierter Prompt gesendet; eine Konversation mit Kontext-Carry-over ist nicht implementiert.
-- **Daten-Leakage möglich:** Wie bei der ML-Pipeline besteht das Risiko, dass Target-Informationen in Features einfließen, wenn keine saubere Trennung erfolgt.
-- **Sprachabhängigkeit:** Die Prompts sind primär auf Englisch ausgelegt; deutschsprachige Modelle oder Antworten erfordern ggf. Anpassungen.
 
 #### 4.3.3.1 Verbindungs-Management (llm_functions.py)
 
@@ -1819,7 +1794,7 @@ Dies reduziert Code-Duplikation und vereinfacht Wartung (Änderungen nur an eine
 
 # 5. Resultate (Dashboard)
 
-Dieses Kapitel beschreibt die sichtbaren Ergebnisse des Praxisprojekts „FinSight“ aus Sicht der Nutzerinnen und Nutzer. Im Fokus stehen das entstandene Streamlit-Dashboard, die Interaktionslogik, der typische User Flow sowie die wahrnehmbare Qualität (Usability, Stabilität, Performance). Ergänzend werden die wichtigsten Seiten und Funktionen anhand der realisierten UI-Struktur eingeordnet und mit Abbildungen (als Platzhalter) dokumentiert.  
+Dieses Kapitel beschreibt die sichtbaren Ergebnisse des Praxisprojekts „FinSight" aus Sicht der Nutzerinnen und Nutzer. Im Fokus stehen das entstandene Streamlit-Dashboard, die Interaktionslogik, der typische User Flow sowie die wahrnehmbare Qualität (Usability, Stabilität, Performance). Ergänzend werden die wichtigsten Seiten und Funktionen anhand der realisierten UI-Struktur eingeordnet und mit Screenshots dokumentiert.
 
 Die in Kapitel 4 beschriebene technische Architektur (Drei-Schichten-Architektur, SQLite-Datenhaltung, modulare Backend-Services) spiegelt sich im Dashboard als klar strukturiertes, mehrseitiges Anwendungskonzept wider. Die App ist so gestaltet, dass Nutzer ohne tiefes Data-Science- oder Programmierwissen Daten explorieren, Modelle trainieren und LLM-basierte Analysen durchführen können, während fortgeschrittene Nutzer über flexible Auswahlmechanismen (Datenquellen, Features/Targets, Modellparameter) experimentelle Workflows realisieren können.
 
@@ -1860,311 +1835,974 @@ Als Resultat wurde eine lauffähige Streamlit-Anwendung entwickelt, die folgende
    - Verwaltung gespeicherter Modelle (Löschen, Überblick über Dateigrößen)
    - Sicherheitsorientierte Behandlung sensibler Keys (Alpha Vantage Key nur Session)
 
+**Link (Code):**  
+Die gesamte Frontend-Implementierung befindet sich unter [`src/frontend/st/`](src/frontend/st/).
+
 ---
 
 ## 5.2 Nutzererlebnis: Einstieg und typischer User Flow
 
-Aus Anwendersicht ist FinSight als Multi-Page-Dashboard konzipiert. Der Einstieg erfolgt über die **Startseite** (`Start.py`), welche eine strukturierte Orientierung bietet und gleichzeitig notwendige Setup-Schritte zentralisiert.
+Aus Anwendersicht ist FinSight als Multi-Page-Dashboard konzipiert. Der Einstieg erfolgt über die **Startseite** ([`Start.py`](src/frontend/st/Start.py)), welche eine strukturierte Orientierung bietet und gleichzeitig notwendige Setup-Schritte zentralisiert.
 
 ### 5.2.1 Erster Einstieg (Onboarding)
 
-Beim ersten Start wird der Nutzer in der Regel über folgende Reihenfolge geführt:
+Die Startseite präsentiert sich mit einem prominenten FinSight-Logo und zwei zentralen Tabs: **Welcome** und **Setup**.
 
-1. **Welcome**: Kurzüberblick über Ziele und Funktionsumfang  
-2. **Setup**: Hinweise zur Bedienung, Konfiguration von:
-   - Alpha-Vantage API-Key (für bestimmte Downloads)
-   - Ollama-Verbindung (local/host/container)
-   - ggf. Standardmodelle für Assistant/LLM Playground
+![Startseite - Welcome](rdme_assets/start.png)
+*Abbildung 5-1: Startseite mit Welcome- und Setup-Tabs*
 
-Dieser Flow reduziert Einstiegsbarrieren und adressiert typische Probleme bei daten- und modellgetriebenen Anwendungen: fehlende Keys, fehlende LLM-Verbindung oder unklare Datenquellen.
+Beim ersten Start wird der Nutzer über folgende Reihenfolge geführt:
 
-**Link (Code):**  
-- Startseite: [`src/frontend/st/Start.py`](src/frontend/st/Start.py)
+**1. Welcome-Tab:**
+- Kurzüberblick über Projektziele und Funktionsumfang
+- Visuelle Darstellung der Hauptfunktionalitäten
+- Navigationshilfen zu den verschiedenen Seiten
+
+**2. Setup-Tab:**
+- Hinweise zur initialen Konfiguration
+- Alpha-Vantage API-Key Eingabe (für Datenupdates)
+- Ollama-Verbindung testen (local/host/container)
+- Standardmodelle für Assistant/LLM Playground laden
+
+Dieser Flow reduziert Einstiegsbarrieren erheblich und adressiert typische Probleme bei daten- und modellgetriebenen Anwendungen: fehlende API-Keys, fehlende LLM-Verbindung oder unklare Datenquellen werden proaktiv abgefragt, bevor der Nutzer auf Fehler stößt.
+
+### 5.2.2 Navigationsprinzip und Seitenübersicht
+
+Die Anwendung nutzt Streamlits Sidebar-Navigation für die Hauptnavigation zwischen den funktionalen Bereichen.
+
+![Navigation - Seitenübersicht](rdme_assets/pages.png)
+*Abbildung 5-2: Sidebar-Navigation mit allen Hauptseiten*
+
+Die UI ist in funktionale Bereiche aufgeteilt, die den Arbeitsprozess abbilden: **Start → Data → Machine Learning → LLM Playground → Assistant → Settings**.
+
+**Implementierte Seiten:**
+- [`src/frontend/st/Start.py`](src/frontend/st/Start.py) - Onboarding und Setup
+- [`src/frontend/st/pages/1 Data.py`](src/frontend/st/pages/1%20Data.py) - Datenanalyse und -verwaltung
+- [`src/frontend/st/pages/2 Machine Learning.py`](src/frontend/st/pages/2%20Machine%20Learning.py) - ML-Training
+- [`src/frontend/st/pages/3 LLM Playground.py`](src/frontend/st/pages/3%20LLM%20Playground.py) - LLM-Analysen
+- [`src/frontend/st/pages/4 Assistant.py`](src/frontend/st/pages/4%20Assistant.py) - Hilfsassistent
+- [`src/frontend/st/pages/5 Settings.py`](src/frontend/st/pages/5%20Settings.py) - Konfiguration
+
+### 5.2.3 Typischer Arbeitsablauf
+
+Ein typischer User Flow durch die Anwendung folgt diesem Muster:
+
+**Phase 1: Initiales Setup (Start-Seite)**
+1. Ollama-Verbindung prüfen und konfigurieren
+2. Optional: Alpha Vantage API-Key hinterlegen
+3. Dokumentation und Hilfestellung lesen
+
+**Phase 2: Datenbereitstellung (Data-Seite)**
+4. Zu "Data" navigieren
+5. Daten aktualisieren oder eigene Datensätze hochladen
+6. Explorative Analyse einzelner Symbole oder Vergleichsanalysen durchführen
+
+**Phase 3: Modellierung (Machine Learning)**
+7. Zu "Machine Learning" wechseln
+8. Datenquelle und Features/Target auswählen
+9. Modell konfigurieren (Algorithmus, Test-Size, Scaling)
+10. Training starten und Ergebnisse evaluieren
+11. Modell speichern für spätere Wiederverwendung
+
+**Phase 4: Intelligente Analyse (LLM Playground)**
+12. "LLM Playground" öffnen
+13. Datenquelle und Analysemodus wählen
+14. LLM-basierte Insights generieren lassen
+15. Prompt einsehen und ggf. anpassen
+
+**Phase 5: Konfiguration und Wartung (Settings)**
+16. "Settings" für systemweite Anpassungen nutzen
+17. Gespeicherte Modelle verwalten
+18. Training-Limits und Datenquellen konfigurieren
+
+Dieser Workflow ist nicht streng linear – fortgeschrittene Nutzer können direkt zu ML oder LLM springen, wenn Daten bereits vorhanden sind.
 
 ---
 
-## 5.3 Dashboard-Struktur: Seiten und Interaktionsprinzipien
-
-Die UI ist in funktionale Bereiche aufgeteilt, die den Arbeitsprozess abbilden: **Daten → Modellierung → LLM → Assistance → Konfiguration**. Die Navigation erfolgt über Streamlit-Seiten im Ordner `pages/`.
-
-**Übersicht (Code):**
-- [`src/frontend/st/pages/1 Data.py`](src/frontend/st/pages/1%20Data.py)  
-- [`src/frontend/st/pages/2 Machine Learning.py`](src/frontend/st/pages/2%20Machine%20Learning.py)  
-- [`src/frontend/st/pages/3 LLM Playground.py`](src/frontend/st/pages/3%20LLM%20Playground.py)  
-- [`src/frontend/st/pages/4 Assistant.py`](src/frontend/st/pages/4%20Assistant.py)  
-- [`src/frontend/st/pages/5 Settings.py`](src/frontend/st/pages/5%20Settings.py)
-
----
-
-## 5.4 Data-Seite: Analyse- und Datenmanagement als Dashboard-Erlebnis
+## 5.3 Data-Seite: Analyse- und Datenmanagement als Dashboard-Erlebnis
 
 Die Data-Seite stellt den zentralen Einstieg in die fachliche Arbeit mit Finanzdaten dar. Der Nutzer erlebt hier eine Kombination aus **Kontrollpanel (Sidebar)** und **Analysefläche (Main Area)**.
 
-### 5.4.1 Sidebar: Kontrollpanel für Datenupdates und Datenimport
+**Link (Code):**  
+[`src/frontend/st/pages/1 Data.py`](src/frontend/st/pages/1%20Data.py)
 
-Die Sidebar bündelt systemnahe Operationen:
-- Anzeige „Last manual update“ als Statuskarte
-- Buttons für:
-  - **Update All Data**
-  - **Update Processed Data**
-  - **Update Single Ticker Data**
-- Download neuer Ticker (optional, abhängig von Key und Datenquelle)
-- Upload eigener Datensätze inkl. Konfliktstrategie (Fail/Replace/Append)
+### 5.3.1 Sidebar: Kontrollpanel für Datenupdates und Datenimport
+
+Die Sidebar fungiert als systemnahes Kontrollpanel und bündelt alle datenrelevanten Operationen:
+
+![Data Sidebar - Update-Optionen](rdme_assets/data_sidebar_updates.png)
+*Abbildung 5-3: Data-Sidebar mit Update-Funktionen und Upload-Bereich*
+
+**Statusanzeige:**
+- "Last data update: NOT NOW" zeigt den Zeitstempel der letzten Aktualisierung
+- Implementiert über `st.session_state.get("last_manual_update")`
+- Visueller Hinweis für Nutzer, ob Daten aktuell sind
+
+**Update-Funktionen (drei Buttons):**
+
+1. **Update All Data**
+   - Aktualisiert sämtliche Yahoo Finance Daten (Preise, Infos, Fundamentals)
+   - Trigger: `update_all_yf_data()` + `update_pricing_and_info()`
+   - Zeitaufwand: Je nach Ticker-Liste mehrere Minuten
+   - Feedback: Success-Message mit Anzahl aktualisierter Symbole
+
+2. **Update Processed Data**
+   - Verarbeitet Alpha Vantage Rohdaten zu strukturierten Tabellen
+   - Trigger: `process_all_alphavantage_data()`
+   - Führt ETL-Pipeline aus (Extraktion, Transformation, Loading)
+
+3. **Update Single Ticker Data**
+   - Selektive Aktualisierung einzelner Symbole (Dropdown-Auswahl)
+   - Nützlich für gezielte Updates ohne vollständigen Refresh
+   - Minimiert API-Calls bei Rate-Limits
+
+**Download-Funktion:**
+- "Search Stock" Input-Feld für Symbol-Suche
+- "Download Ticker Data" Button für neue Symbole
+- Lädt Daten von Yahoo Finance herunter und persistiert sie
+
+**Upload-Funktionalität:**
+
+![Data Sidebar - Upload-Bereich](rdme_assets/data_sidebar_upload.png)
+*Abbildung 5-4: Upload-Bereich für nutzereigene Datensätze*
+
+Der Upload-Bereich ("Create your own Database") ermöglicht:
+
+- **Datei-Upload:** Drag & Drop oder File-Browser für CSV/Excel (max. 200MB)
+- **Tabellenname:** Nutzer definiert Namen für Ziel-Tabelle
+- **Konfliktstrategie:** Dropdown mit drei Optionen
+  - **Fail:** Abbruch bei existierender Tabelle (sicher)
+  - **Replace:** Überschreiben bestehender Daten (destruktiv)
+  - **Append:** Hinzufügen neuer Zeilen (additiv)
+- **Import-Button:** Trigger für `add_user_table()` aus `users_database.py`
 
 Diese Anordnung unterstützt eine klare Handlungskette:
 **(1) Daten verfügbar machen → (2) Daten aktualisieren → (3) Daten analysieren**
 
-### 5.4.2 Analyse-Tab: Interaktive Exploration einzelner Symbole
+### 5.3.2 Analyse-Tab: Interaktive Exploration einzelner Symbole
 
-Im Analysebereich erfolgt die Auswahl eines Symbols aus einer vordefinierten Ticker-Liste (~400 Symbole). Anschließend werden Unternehmensinformationen und Kennzahlen angezeigt (z.B. Sector, Industry, Market Cap, PE Ratio, Beta).  
+Die Hauptfläche präsentiert sich mit zwei Tabs: **Analysis** (aktiv) und **Data Settings** (Datenbank-Übersicht).
 
-Darauf aufbauend kann eine Kennzahl bzw. Metrik ausgewählt und als Zeitreihe visualisiert werden. Interaktive Features (Zoom, Hover, Bereichsauswahl) verbessern die Nutzbarkeit insbesondere bei langen Zeitreihen.
+![Data Analysis - Single Stock](rdme_assets/data_analysis_single.png)
+*Abbildung 5-5: Single Stock Analysis mit Unternehmensinfos und Kennzahlen*
 
-### 5.4.3 Compared Stock Analysis: Mehrfachvergleich im selben Dashboard
+**Interaktionsablauf im Analysis-Tab:**
 
-Die Vergleichsanalyse ermöglicht die Auswahl mehrerer Symbole und zeigt deren Schlusskurse in einer gemeinsamen Visualisierung. Ergänzend werden zentrale Kennzahlen tabellarisch gegenübergestellt. Dies führt zu einem „Dashboard-Charakter“, in dem visuelle Trendbeobachtung (Chart) und kompakte Kennzahlen (Metrikblöcke/Tabelle) kombiniert sind.
+**Schritt 1: Symbol-Auswahl**
+- Dropdown "Choose Stock to Analyze" mit ~400 vorbefüllten US-Aktien
+- Alphabetische Sortierung für schnelle Navigation
+- Beispiel-Auswahl: "A" (Agilent Technologies, Inc.)
 
-### 5.4.4 Tab „Databases“: Transparenz über Datenhaltung
+**Schritt 2: Unternehmensinformationen (Karten-Layout)**
 
-Der zweite Tab liefert eine Übersicht über verfügbare Tabellen (systemseitig und userseitig). Dies wird im Nutzererlebnis als „Admin-/Data-Lake“-Ansicht wahrgenommen und unterstützt:
-- Verständnis, welche Daten vorhanden sind
-- Debugging (z.B. warum ein Symbol fehlt)
-- Kontrolle über userseitige Importe
+Nach Auswahl werden automatisch Informationskarten angezeigt:
 
-**Abbildung 5-1 (Platzhalter): Data-Seite – Analyseansicht**  
-> *Hier Screenshot einfügen:* Ticker-Auswahl, Unternehmensinfos, Metrik-Auswahl, Chart  
-`![Data – Analyseansicht](assets/figures/fig_5_1_data_analysis.png)`
+Obere Reihe (3 Karten):
+- **Symbol:** "A"
+- **Short Name:** "Agilent Technologies, Inc."
+- **Country:** "United States"
 
-**Abbildung 5-2 (Platzhalter): Data-Seite – Tabellensicht / Datenbanken**  
-> *Hier Screenshot einfügen:* Tabellenlisten, User-Tabellen, Row Count  
-`![Data – Datenbanken](assets/figures/fig_5_2_data_databases.png)`
+Mittlere Reihe (3 Karten):
+- **Sector:** "Healthcare"
+- **Industry:** "Diagnostics & Research"
+- **Website:** "https://www.agilent.com"
+
+Unterer Bereich:
+- **Business Summary:** Ausführliche Unternehmensbeschreibung (scrollbar bei langem Text)
+
+**Schritt 3: Kennzahlen-Dashboard**
+
+![Data Analysis - Kennzahlen](rdme_assets/data_analysis_metrics.png)
+*Abbildung 5-6: Finanzkennzahlen-Dashboard mit Market Cap, PE-Ratio, ROE, etc.*
+
+Das Kennzahlen-Dashboard zeigt in zwei Reihen à drei Metriken:
+
+Obere Reihe:
+- **Market Capitalization:** "41.25 Mrd."
+- **PE-Ratio:** "3.18 Tsd."
+- **Price/Book:** "6.11"
+
+Untere Reihe:
+- **ROE:** "206.00"
+- **Profit-Margin:** "188.00€"
+- **Beta:** "1.274"
+
+**Last Updated:** "08 Dec 2025" als Timestamp
+
+Diese Metriken werden aus `get_company_info_yf(symbol)` geladen und als `st.metric()` dargestellt.
+
+**Schritt 4: Zeitreihenvisualisierung**
+
+Unterhalb der Kennzahlen:
+
+- **Choose Metric:** Dropdown mit verfügbaren Spalten (close, open, high, low, volume, etc.)
+- **Starting Date:** Date-Input für Zeitraum-Filterung (Standardwert: frühestes Datum im Datensatz)
+- Beispiel-Auswahl: "close" → zeigt Schlusskursverlauf
+
+Nach Auswahl wird ein interaktiver Line-Chart gerendert:
+- Streamlit Native Chart mit Zoom, Hover, Pan
+- X-Achse: Date (automatisch erkannt und formatiert)
+- Y-Achse: Metrik-Wert
+
+**Interaktive Features:**
+- **Zoom:** Bereichsauswahl mit Maus
+- **Hover:** Anzeige exakter Werte bei Mouseover
+- **Pan:** Verschieben des Zeitfensters
+- **Reset:** Doppelklick für Zoom-Reset
+
+Diese Features verbessern die Nutzbarkeit insbesondere bei langen Zeitreihen (mehrere Jahre täglicher Daten).
+
+### 5.3.3 Compared Stock Analysis: Mehrfachvergleich im selben Dashboard
+
+Der zweite Interaktionsmodus innerhalb des Analysis-Tabs ermöglicht Vergleichsanalysen:
+
+**Interaktionsablauf:**
+
+**Schritt 1: Mehrfachauswahl**
+- Multiselect "Select tickers to compare"
+- Beliebig viele Symbole auswählbar (praktisch max. 5-10 für Lesbarkeit)
+
+**Schritt 2: Gemeinsames Chart**
+- Line-Chart mit mehreren Zeitreihen
+- Jedes Symbol in eigener Farbe
+- Legende automatisch generiert
+
+**Schritt 3: Kennzahlen-Vergleichstabelle**
+
+Ergänzend zum Chart wird eine Tabelle angezeigt mit Spalten:
+- Symbol
+- Current Price
+- Market Cap
+- PE Ratio
+- 52-Week Performance (%)
+
+Diese Tabelle ermöglicht schnellen quantitativen Vergleich, während das Chart qualitative Trends visualisiert.
+
+**Normalisierungs-Option (optional):**
+
+Ein Toggle "Normalize to percentage" ermöglicht:
+- Alle Zeitreihen werden auf Basis ihres ersten Werts skaliert
+- Formel: `(current_value / first_value - 1) * 100`
+- Vorteil: Vergleichbarkeit von Aktien unterschiedlicher Preisklassen
+
+Dies führt zu einem echten „Dashboard-Charakter", in dem visuelle Trendbeobachtung (Chart) und kompakte Kennzahlen (Metrikblöcke/Tabelle) kombiniert sind.
+
+### 5.3.4 Tab „Data Settings": Transparenz über Datenhaltung
+
+Der zweite Tab "Data Settings" liefert eine Admin-/Data-Lake-Ansicht:
+
+**System-Tabellen (finance.db):**
+- Liste aller Tabellen mit Row Count
+- Beispiele: `yf_price_history` (2.5M Zeilen), `company_info` (400 Zeilen)
+- Letzte Aktualisierung (falls tracked)
+
+**User-Tabellen (users_database.db):**
+- Liste aller hochgeladenen Tabellen
+- Upload-Zeitstempel
+- Löschfunktion mit Bestätigung ("Are you sure?")
+
+Diese Transparenz unterstützt:
+- **Verständnis:** Welche Daten sind vorhanden?
+- **Debugging:** Warum fehlt ein Symbol?
+- **Kontrolle:** Userseitige Importe managen
 
 ---
 
-## 5.5 Machine Learning Studio: Ergebnisorientiertes Training im Dashboard
+## 5.4 Machine Learning Studio: Ergebnisorientiertes Training im Dashboard
 
-Das Machine Learning Studio stellt die Transformation von Daten in Modelle als interaktiven Prozess bereit. Aus Nutzersicht wirkt diese Seite wie eine Kombination aus „Training Wizard“ und „Experimentierlabor“ (Playground), wobei die wichtigsten Parameter in der Sidebar konzentriert sind.
+Das Machine Learning Studio transformiert klassische ML-Workflows in eine GUI-gestützte Trainingsumgebung. Aus Nutzersicht wirkt diese Seite wie eine Kombination aus „Training Wizard" und „Experimentierlabor" (Playground).
 
-### 5.5.1 Sidebar als Trainings-Konsole
+**Link (Code):**  
+[`src/frontend/st/pages/2 Machine Learning.py`](src/frontend/st/pages/2%20Machine%20Learning.py)
 
-Die Sidebar übernimmt die Rolle eines Konfigurationspanels:
-- Algorithmuswahl (Regression/Klassifikation)
-- Datenquellenauswahl (Yahoo Finance, Alpha Vantage, User Tables)
-- Test-Set-Größe (Slider)
-- Feature-Scaling (StandardScaler, optional)
-- Time-Series Mode (Lag-Features) inkl. Lag-Anzahl
-- Training starten per Button
+### 5.4.1 Sidebar als Trainings-Konsole
+
+Die Sidebar fungiert als zentrales Konfigurationspanel für das Modelltraining:
+
+![ML Sidebar - Einstellungen](rdme_assets/ml_sidebar_settings.png)
+*Abbildung 5-7: ML-Sidebar mit Algorithmus-, Datenquellen- und Training-Konfiguration*
+
+**Konfigurationsbereiche:**
+
+**1. Algorithmus-Auswahl**
+- Dropdown mit fünf Optionen:
+  - Linear Regression
+  - Decision Tree Regressor
+  - Random Forest Regressor
+  - Logistic Regression
+  - Direction Classification (Up/Down)
+
+**2. Datenquelle**
+- Dropdown "Datenquelle" mit Optionen:
+  - No Table selected (Initial-State)
+  - Price History (alle Yahoo Finance Daten)
+  - Single Stock Price (einzelnes Symbol)
+  - Alphavantage (processed Tables)
+  - User Tables (hochgeladene Datensätze)
+- Button "Choose Table" für Tabellen-Selektion bei Alphavantage/User Tables
+
+**3. Training-Parameter**
+
+![ML Sidebar - Training-Parameter](rdme_assets/ml_sidebar_training.png)
+*Abbildung 5-8: Test-Set-Größe, Feature-Scaling und Zeitreihenmodus*
+
+- **Test Set Größe:** Slider von 0.10 bis 0.50 (Beispiel: 0.20 = 20%)
+- **Features skalieren (StandardScaler):** Checkbox (aktiviert im Screenshot)
+  - Wendet `StandardScaler()` auf numerische Features an
+  - Wichtig für Distanz-basierte Algorithmen (Logistic Regression)
+- **Zeitreihenmodus (Lag-Features vom Target):** Checkbox (deaktiviert)
+  - Wenn aktiv: erscheint Lag-Anzahl-Slider (1-20)
+  - Generiert automatisch Lag-Features aus Target-Spalte
+
+**4. Training-Button**
+- "🚀 Modell trainieren" Button am Ende der Sidebar
+- Trigger für gesamten Training-Workflow
 
 Diese Struktur führt zu einer klaren Interaktionslogik:
-**Konfigurieren → Daten laden → Features/Target wählen → Horizon/Time-Series einstellen → Trainieren → Ergebnisse prüfen → Modell speichern**
+**Konfigurieren → Daten laden → Features/Target wählen → Optional: Horizon/Time-Series → Trainieren → Ergebnisse prüfen → Modell speichern**
 
-### 5.5.2 Hauptfläche: Datenkontrolle und Modellbildung
+### 5.4.2 Hauptfläche: Datenkontrolle und Modellbildung
 
-Nach Laden einer Datenquelle zeigt die Seite:
-- Übersichtsmodule (Zeilen/Spalten/erkannte Zeitspalte)
-- DataFrame Preview (scrollbar)
-- Feature- und Target-Auswahl
+Nach Laden einer Datenquelle präsentiert sich die Hauptfläche mit mehreren Abschnitten:
 
-Die automatische Erkennung einer Zeitspalte („time series found“) wirkt aus Nutzerperspektive als Assistenzfunktion, die Fehler reduziert (z.B. falsche Spaltenwahl für Forecast Horizon).
+**1. Datenübersicht (Metrics-Header)**
 
-### 5.5.3 Prognosehorizont und Zeitreihenmodus als besondere Ergebnisfunktion
+Drei Metrik-Karten zeigen:
+- **Rows:** Anzahl Zeilen (z.B. 2.500.000)
+- **Columns:** Anzahl Spalten (z.B. 15)
+- **Time Series Found:** Erkannte Zeitspalte (z.B. "date" oder "No")
 
-Zwei Funktionen erhöhen den praktischen Wert für Finanzdaten:
+Die automatische Erkennung einer Zeitspalte wirkt als Assistenzfunktion:
+- Verhindert Fehler bei Forecast Horizon (benötigt Zeitspalte)
+- Warnt, wenn Time-Series-Mode ohne Zeitspalte aktiviert wird
 
-1. **Forecast Horizon (Future Target Shift)**  
-   Die Zielvariable wird zeitlich verschoben, um „zukünftige“ Werte zu prognostizieren (1 Day, 3 Weeks, 3 Months, 1 Year).  
-   Für Nutzer ist dies eine intuitive Abstraktion: „Ich möchte den Kurs in X Zeit prognostizieren.“
+**2. DataFrame Preview**
 
-2. **Time-Series Mode (Lag-Features)**  
-   Statt manuell viele Features zu wählen, kann die Anwendung Lag-Features aus dem Target erzeugen.  
-   Dies erlaubt schnelle Baselines für Zeitreihenmodelle ohne komplexes Feature Engineering.
+Expander "📋 Show DataFrame" (standardmäßig collapsed):
+- Zeigt erste 50 Zeilen in scrollbarer Tabelle
+- Ermöglicht visuelle Inspektion der Daten
+- Nutzer können Spaltentypen und Werte prüfen
 
-### 5.5.4 Ergebnisdarstellung: Metriken und Visualisierung
+**3. Feature- und Target-Auswahl**
 
-Nach Training werden je nach Modelltyp unterschiedliche Ausgaben gezeigt:
+![ML Main - Feature/Target Selection](rdme_assets/ml_main_feature_target.png)
+*Abbildung 5-9: Feature- und Target-Auswahl mit Data-Leakage-Warnung*
 
-- **Regression:** RMSE, MSE, R² und Vergleichsplot `y_true` vs `y_pred`  
-- **Klassifikation:** Accuracy und Konfusionsmatrix
+Zwei zentrale Komponenten:
 
-Die Kombination aus numerischen Metriken und Visualisierung unterstützt eine schnelle Ergebnisbewertung im Dashboard-Kontext.
+**Feature columns (X):**
+- Multiselect mit allen verfügbaren Spalten
+- Beispiel: ["jahr", "rendite(adjclose)", "kbv", "kcv", "dividendenrendite"]
+- Mehrfachauswahl möglich
 
-### 5.5.5 Persistenz: Speicherung der Modelle und Wiederverwendung
+**Target column (y):**
+- Single-Select Dropdown
+- Beispiel: "jahr"
 
-Modelle werden als `.pkl` gespeichert und enthalten neben dem Modell auch Metadaten (Algorithmus, Features, Scaler, Horizon, Lag-Mode).  
-Für Nutzer entsteht dadurch ein „Model Registry“-ähnlicher Effekt: Trainingsläufe werden reproduzierbar und wiederverwendbar.
+**Data-Leakage-Warnung:**
 
-**Abbildung 5-3 (Platzhalter): ML Studio – Konfiguration und DataFrame Preview**  
-`![ML Studio – Daten & Settings](assets/figures/fig_5_3_ml_overview.png)`
+Wichtige Sicherheitsfunktion: Wenn Target in Features enthalten ist UND kein Time-Series-Mode aktiv:
 
-**Abbildung 5-4 (Platzhalter): ML Studio – Trainingsergebnisse (Regression)**  
-`![ML Studio – Regression Result](assets/figures/fig_5_4_ml_regression_result.png)`
+> "Hinweis: Die Target-Spalte ist auch als Feature ausgewählt ohne Zeithorizont-Shift. Das kann zu Data Leakage führen. Mit Zeit-Shift oder Zeitreihenmodus ist das normalerweise unkritisch."
 
-**Abbildung 5-5 (Platzhalter): ML Studio – Trainingsergebnisse (Klassifikation)**  
-`![ML Studio – Classification Result](assets/figures/fig_5_5_ml_classification_result.png)`
+Diese Warnung (in gelb/olive dargestellt) reduziert methodische Fehler für weniger erfahrene Nutzer.
 
----
+**4. Prognosehorizont (Zukunfts-Target)**
 
-## 5.6 Saved Models: Wiederverwendung als Nutzermehrwert
+![ML Main - Forecast Horizon](rdme_assets/ml_main_forecast_horizon.png)
+*Abbildung 5-10: Vorhersagehorizont-Konfiguration mit Zeitspalten-Auswahl*
 
-Die Saved-Models-Ansicht (als separater Bereich/Tab innerhalb der ML-Seite) erweitert das Training um einen praktischen Workflow:
+Expander "⏩ Vorhersagehorizont (Zukunfts-Target)":
 
-- Übersicht aller Modelle inkl. Metadaten (Algo, Data Source, Target, Horizon, Time-Series Mode)
-- Auswahl eines Modells und Anzeige technischer Details
-- Download-Funktion für lokale Weiterverwendung
-- „Try the model with current data“ als Inferenz-Demo
+**Zeitspalte für zukünftiges Target:**
+- Dropdown mit erkannten Datum-Spalten (Beispiel: "jahr")
+- Erforderlich für Forecast Horizon
 
-Aus Nutzerperspektive entsteht so eine nachvollziehbare Kette:
+**Vorhersagehorizont:**
+- Dropdown mit Optionen:
+  - Kein Shift (aktuelles Target)
+  - 1 Day
+  - 3 Weeks
+  - 3 Months
+  - 1 Year
+
+**Funktionsweise (für Nutzer abstrakt):**
+
+Für Nutzer ist dies eine intuitive Abstraktion: "Ich möchte den Kurs in 3 Monaten prognostizieren."
+
+Technisch erfolgt:
+1. Merge der Tabelle mit sich selbst auf verschobener Zeitspalte
+2. Target wird zu `future_target` umbenannt
+3. Zeilen ohne Future-Wert werden entfernt (NaN-Drop)
+
+**5. Time-Series Mode**
+
+Wenn in Sidebar aktiviert, erscheint Lag-Features-Generierung:
+- Nutzer wählt Anzahl Lags (z.B. 5)
+- System erstellt automatisch: `target_lag_1`, `target_lag_2`, ..., `target_lag_5`
+- Diese ersetzen manuelle Feature-Auswahl
+
+Vorteil: Schnelle Baseline für Zeitreihenmodelle ohne komplexes Feature Engineering.
+
+### 5.4.3 Ergebnisdarstellung: Metriken und Visualisierung
+
+Nach Klick auf "Modell trainieren" erfolgt Training und Evaluation:
+
+**Regression-Output:**
+
+Drei Metrik-Karten:
+- **RMSE:** Root Mean Squared Error (z.B. 15.42)
+- **MSE:** Mean Squared Error (z.B. 237.78)
+- **R²:** Bestimmtheitsmaß (z.B. 0.89)
+
+**Visualisierung:**
+- Line-Chart mit zwei Linien:
+  - "Actual" (y_test) in blau
+  - "Predicted" (y_pred) in rot
+- X-Achse: Sample-Index (chronologisch bei Time-Series-Mode)
+- Y-Achse: Target-Wert
+
+**Klassifikation-Output:**
+
+Zwei Komponenten:
+- **Accuracy:** Metrik-Karte (z.B. 0.85 = 85%)
+- **Confusion Matrix:** Heatmap-Visualisierung
+  - Zeilen: True Labels
+  - Spalten: Predicted Labels
+  - Farb-Codierung: Dunkel = viele Samples
+
+Die Kombination aus numerischen Metriken und Visualisierung unterstützt schnelle Ergebnisbewertung im Dashboard-Kontext.
+
+### 5.4.4 Modell-Speicherung und Saved Models
+
+Nach erfolgreichem Training erscheint Speicher-Bereich:
+
+**Speichern-Dialog:**
+- Input-Feld für Modellnamen (z.B. "aapl_rf_3months")
+- Button "💾 Save Model"
+- Speichert als `.pkl` unter `saved_models/`
+
+**Gespeicherte Metadaten:**
+- Algorithmus
+- Datenquelle
+- Feature-Spalten
+- Target-Spalte
+- Scaler (falls verwendet)
+- Forecast Horizon
+- Time-Series-Mode + Lag-Parameter
+- Label Encoder (bei Klassifikation)
+
+**Saved Models Tab (separater Bereich):**
+
+Wechsel zu "Saved Models" zeigt:
+
+**Modell-Übersicht (Tabelle):**
+- Model Name
+- Algorithm
+- Data Source
+- Target Column
+- Forecast Horizon
+- Time-Series Mode
+- Creation Date
+- File Size
+
+**Modell-Aktionen:**
+- Dropdown zur Modell-Auswahl
+- Expander "Show Model Details" mit allen Metadaten
+- Button "📥 Download Model" für lokale Weiterverwendung
+- Expander "Try the model with current data" für Inferenz-Demo
+
+Aus Nutzerperspektive entsteht eine nachvollziehbare Kette:
 **Trainieren → Speichern → Wiederverwenden → Exportieren**
 
-Diese Funktionalität ist ein wesentliches Ergebnis, da sie ein häufiges Problem in Prototypen löst: Modelle verschwinden nicht nach dem Training, sondern sind als Artefakte verfügbar.
-
-**Abbildung 5-6 (Platzhalter): Saved Models – Modellübersicht**  
-`![Saved Models – Overview](assets/figures/fig_5_6_saved_models.png)`
+Diese Funktionalität löst ein häufiges Problem in Prototypen: Modelle verschwinden nicht nach dem Training, sondern sind als wiederverwendbare Artefakte verfügbar.
 
 ---
 
-## 5.7 LLM Playground: Datenbasierte Analyse als Text-Resultat
+## 5.5 LLM Playground: Datenbasierte Analyse als Text-Resultat
 
-Der LLM Playground ergänzt die klassischen ML-Workflows durch eine sprachbasierte Analyse. Der Nutzer erlebt hier ein Dashboard, das nicht primär numerische Outputs liefert, sondern **erklärenden Text**, der aus Datenproben und statistischen Zusammenfassungen erzeugt wird.
+Der LLM Playground ergänzt klassische ML-Workflows durch sprachbasierte Analysen. Der Nutzer erlebt ein Dashboard, das nicht primär numerische Outputs liefert, sondern **erklärenden Text**, der aus Datenproben und Statistiken generiert wird.
 
-### 5.7.1 Verbindungskonzept (local/host/container) als Ergebnis
+**Link (Code):**  
+[`src/frontend/st/pages/3 LLM Playground.py`](src/frontend/st/pages/3%20LLM%20Playground.py)
 
-Die App bietet drei Verbindungsoptionen (Container Ollama / Host / Local).  
-Damit ist die Nutzung flexibel: vollständig lokal (datenschutzfreundlich) oder containerisiert (reproduzierbares Deployment).
+### 5.5.1 Sidebar: Ollama-Konfiguration und Datenquelle
 
-### 5.7.2 Auswahl der Datenquelle und Sample Size
+Die Sidebar gliedert sich in zwei Hauptbereiche:
 
-Analog zur ML-Seite kann eine Datenquelle gewählt werden.  
-Zusätzlich wird festgelegt, wie viele Zeilen an das LLM übergeben werden (bis max. 50). Dies wirkt als:
-- Sicherheitsmechanismus gegen zu große Prompts
-- Usability-Funktion zur Fokussierung auf „aktuelle“ Daten
+![LLM Sidebar - Ollama Settings](rdme_assets/llm_sidebar_ollama.png)
+*Abbildung 5-11: Ollama-Konfiguration mit Verbindungstest und Modellverwaltung*
 
-### 5.7.3 Analysemodi und Custom Prompt
+**⚙️ Ollama Settings:**
 
-Der Nutzer kann zwischen mehreren Modi wählen:
-- Regression
-- Classification
-- Trend Analysis
-- Free Analysis
+**Verbindungsauswahl:**
+- Radio-Buttons mit drei Optionen:
+  - **Container** (ausgewählt im Screenshot)
+  - **Host**
+  - **Local** (mit Custom URL Input)
+- Code-Anzeige der resultierenden URL: `http://ollama:11434`
+- Button "🔌 Test connection" für Verbindungsprüfung
 
-Damit entsteht ein „Prompt-Template-System“, ohne dass Nutzer direkt Prompt Engineering beherrschen müssen. Der Custom Prompt erlaubt dennoch zusätzliche Steuerung.
+**Modellkonfiguration:**
+- Input-Feld "Model name:" (Beispiel: `mathstral:7b`)
+- Zwei-Spalten-Layout:
+  - Linke Spalte: Button "🔽 Load Model"
+  - Rechte Spalte: Number Input "Timeout (s)" (Standard: 120)
+- Toggle "Auto-load on analysis" (aktiviert im Screenshot)
+  - Lädt Modell automatisch vor Analyse, falls nicht verfügbar
 
-### 5.7.4 Ergebnisdarstellung und Transparenz
+Diese Flexibilität ermöglicht:
+- Vollständig lokalen Betrieb (datenschutzfreundlich)
+- Container-basiertes Deployment (reproduzierbar)
+- Host-Verbindung (Development-Setup)
 
-Das Resultat wird als Text angezeigt („LLM Analysis Result“). Zusätzlich werden:
-- Modellname
-- Prediction Type
-- Datenquelle
-- Features/Target
-- Antwortzeit
-- Sample Size
+**📊 Data Source:**
 
-dokumentiert. Die Einsicht in den generierten Prompt erhöht Transparenz und Nachvollziehbarkeit.
+![LLM Sidebar - Data Source](rdme_assets/llm_sidebar_datasource.png)
+*Abbildung 5-12: Datenquellen-Auswahl im LLM Playground*
 
-**Abbildung 5-7 (Platzhalter): LLM Playground – Konfiguration und Resultat**  
-`![LLM Playground – Result](assets/figures/fig_5_7_llm_playground.png)`
+Identisch zur ML-Seite:
+- Dropdown "Data source" mit denselben Optionen (Price History, Single Stock, Alphavantage, User Tables)
+- Zusätzliche Parameter abhängig von Auswahl (Symbol, Tabellenname)
+
+### 5.5.2 Hauptfläche: Feature/Target-Auswahl und Analysekonfiguration
+
+Die Hauptfläche des LLM Playgrounds folgt einem ähnlichen Aufbau wie die ML-Seite, fokussiert jedoch auf die Vorbereitung für LLM-basierte Analysen:
+
+![LLM Main - Feature & Target Selection](rdme_assets/llm_main_feature_target.png)
+*Abbildung 5-13: Feature/Target-Auswahl und Prediction Configuration im LLM Playground*
+
+**🎯 Feature & Target Selection:**
+
+Analog zur ML-Seite:
+- **Feature columns (X):** Multiselect (Beispiel: "id", "open", "high", "low", "close")
+- **Target column (y):** Single-Select Dropdown (Beispiel: "id")
+
+**🔮 Prediction Configuration:**
+
+Zwei zentrale Einstellungen:
+
+**1. Prediction type (links):**
+- Dropdown mit vier Analysemodi:
+  - **Regression (predict numerical value)** - ausgewählt im Screenshot
+  - Classification (predict category)
+  - Trend Analysis (predict direction)
+  - Free Analysis
+
+Jeder Modus triggert ein spezifisches Prompt-Template, das auf den Analysetyp zugeschnitten ist.
+
+**2. Data sample size (rechts):**
+- Slider von 5 bis 50
+- Aktueller Wert: 10
+- Bestimmt, wie viele letzte Zeilen an das LLM übergeben werden
+- Balance zwischen Kontextlänge und Informationsgehalt
+
+**✏️ Add custom prompt (optional):**
+
+Expander für zusätzliche Prompt-Anweisungen:
+- Textfeld für freie Eingabe
+- Beispiel-Platzhalter: "e.g.: Pay special attention to macroeconomic factors..."
+- Wird an generiertes Prompt angehängt
+
+Diese Struktur ermöglicht:
+- **Anfänger:** Nutzen vorgefertigter Templates ohne Prompt-Engineering
+- **Fortgeschrittene:** Feinjustierung durch Custom Prompts
+
+### 5.5.3 Analyse starten und Ergebnisdarstellung
+
+Nach Konfiguration:
+
+**Start-Button:**
+- "🪄 Start LLM Analysis" (großer Button, volle Breite)
+- Trigger für gesamten Analyse-Workflow
+
+**Analyse-Ablauf (für Nutzer sichtbar):**
+
+1. **Verbindungsprüfung:**
+   - Success-Message: "✓ Connected to Ollama @ http://ollama:11434 (Version: 0.13.5)"
+
+2. **Modell-Loading (bei Auto-load):**
+   - Status-Expander: "Loading model 'mathstral:7b'..."
+   - Nach Erfolg: "✓ Model 'mathstral:7b' ready"
+
+3. **Prompt-Generierung:**
+   - Spinner: "Creating analysis prompt..."
+   - Expander "📝 Show generated prompt" (optional einsehbar)
+
+4. **LLM-Generierung:**
+   - Status-Expander: "🤖 LLM generating analysis..."
+   - Zeigt Fortschritt ohne Streaming (wartet auf komplette Antwort)
+   - Nach Abschluss: "✓ Analysis completed in 12.45s"
+
+**Ergebnis-Anzeige:**
+
+Nach erfolgreicher Generierung:
+
+**📊 LLM Analysis Result:**
+- Markdown-formatierter Text mit der LLM-Antwort
+- Struktur abhängig vom Prediction Type (z.B. bei Regression):
+  ```
+  Prediction: 42.35
+  Confidence Interval: 38.20 - 46.50
+  Justification: Based on the recent trend showing...
+  ```
+
+**ℹ️ Analysis Details (Expander):**
+- **Model:** mathstral:7b
+- **Prediction type:** Regression (predict numerical value)
+- **Data source:** Price History
+- **Features:** id, open, high, low, close
+- **Target:** id
+- **Generation time:** 12.45s
+- **Sample size:** 10 rows
+
+Diese Transparenz ermöglicht:
+- Nachvollziehbarkeit der Analyse
+- Reproduzierbarkeit mit denselben Parametern
+- Debugging bei unerwarteten Ergebnissen
+
+**Prompt-Einsicht (optional):**
+
+Im Expander "Show generated prompt" wird das vollständige Prompt angezeigt:
+- System-Instruktion (z.B. "You are a financial analyst...")
+- Task-Beschreibung
+- Feature-Liste
+- Data-Sample (letzte 10 Zeilen als Tabelle)
+- Statistiken (describe())
+- Anweisungen (Instructions)
+- Erwartetes Format (Format)
+
+Diese Einsicht unterstützt:
+- Lern-Effekt für Prompt-Engineering
+- Anpassung bei unbefriedigenden Ergebnissen
+- Verständnis, welche Daten das LLM "sieht"
 
 ---
 
-## 5.8 Assistant: Nutzerunterstützung als Dashboard-Komponente
+## 5.6 Assistant: Nutzerunterstützung als Dashboard-Komponente
 
-Der Assistant stellt ein ergänzendes Ergebnis dar, das weniger auf Datenanalyse und stärker auf **Hilfe und Guidance** ausgerichtet ist.  
+Der Assistant stellt ein ergänzendes Ergebnis dar, das weniger auf Datenanalyse und stärker auf **Hilfe und Guidance** ausgerichtet ist.
 
-Aus Nutzersicht ist dies ein „kontextueller Helpdesk“, der:
-- Fragen zur Anwendung beantwortet
-- Hinweise zu Modelltraining und Interpretation geben kann
-- den Einstieg für nicht-technische Nutzer erleichtert
+**Link (Code):**  
+[`src/frontend/st/pages/4 Assistant.py`](src/frontend/st/pages/4%20Assistant.py)
 
-Wesentliche UI-Elemente:
-- Chatfenster
-- Reset des Chatverlaufs
-- Anzeige des aktuell verwendeten Modells (z.B. `phi3:mini`)
+![Assistant - Chat Interface](rdme_assets/assistant_chat.png)
+*Abbildung 5-14: Assistant mit Verbindungsstatus und Chat-Interface*
 
-**Abbildung 5-8 (Platzhalter): Assistant – Chat-Interface**  
-`![Assistant – Chat UI](assets/figures/fig_5_8_assistant.png)`
+### 5.6.1 Funktionsumfang und Interaktion
+
+**Kopfbereich:**
+
+**🤖 Digital Assistant - Titel**
+
+Beschreibungstext:
+> "This is your personal digital assistant. You can ask him questions regarding this application if you need help. Please be aware that the answer might take a while and that you need to have a connection, to either the Ollama Container or you own Ollama. You can see the status below:"
+
+**Verbindungsstatus:**
+
+Grüne Info-Box:
+- "Connected with Ollama @ http://localhost:11434 (Version: 0.13.5)"
+- Zeigt aktive Verbindung und Version
+- Bei fehlender Verbindung: Roter Fehler-Banner mit Setup-Hinweisen
+
+**Konfigurationshinweise:**
+
+Text unterhalb Status:
+> "If you don't have a connection, you can go to the settings and change the connection to the Container Ollama version (standard: local Ollama is selected) otherwise please reread the "Setup" Guide in the Start Menu! You can also change your Model in the settings. Larger models will give better output but will take longer to respond!"
+
+**Aktuelles Modell:**
+- "Current model: llama3.1:8b. (You can change this in the settings)"
+- Informiert über verwendetes LLM
+- Link zu Settings für Modellwechsel
+
+### 5.6.2 Chat-Interface
+
+**Eingabefeld:**
+- Textbox am unteren Bildschirmrand
+- Platzhalter: "Ask me something..."
+- Submit-Button (Pfeil-Icon) rechts
+
+**Chat-Verlauf:**
+- Scrollbarer Bereich für Konversation
+- User-Nachrichten rechtsbündig (oder anderer visueller Stil)
+- Assistant-Antworten linksbündig
+- Timestamps bei jeder Nachricht
+
+**Funktionalität:**
+- **Reset-Button:** Löscht Chat-Historie (Session-State)
+- **Kontext-Erhaltung:** Multi-Turn-Dialog möglich (im Gegensatz zu LLM Playground)
+- **Typing-Indicator:** "Assistant is typing..." während Generierung
+
+### 5.6.3 Typische Use Cases
+
+Der Assistant adressiert folgende Nutzeranfragen:
+
+**Anwendungshilfe:**
+- "Wie kann ich ein Modell trainieren?"
+- "Was bedeutet Forecast Horizon?"
+- "Wie lade ich eigene Daten hoch?"
+
+**Interpretation:**
+- "Was ist ein guter R²-Wert?"
+- "Wie interpretiere ich die Konfusionsmatrix?"
+- "Was bedeutet Data Leakage?"
+
+**Troubleshooting:**
+- "Warum funktioniert das Training nicht?"
+- "Ich habe keine Verbindung zu Ollama, was tun?"
+- "Mein Modell hat sehr schlechte Accuracy, warum?"
+
+Die Qualität der Antworten hängt vom gewählten Modell ab:
+- Kleinere Modelle (3-7B): Grundlegende Hilfe, manchmal oberflächlich
+- Größere Modelle (13B+): Detaillierte Erklärungen, bessere Kontextualisierung
 
 ---
 
-## 5.9 Settings: Konfiguration als Ergebnis für Wartbarkeit und Steuerbarkeit
+## 5.7 Settings: Konfiguration als Ergebnis für Wartbarkeit und Steuerbarkeit
 
 Die Settings-Seite ist aus Ergebnis-Sicht ein zentraler Baustein, da sie die App **langfristig nutzbar** macht. Sie reduziert Hardcoding und erlaubt Anpassungen ohne Codeänderung.
 
-### 5.9.1 Global Settings
-- Ollama-Konfiguration (Local/Standard)
-- Reset-Funktionen
-- Alpha Vantage Key Eingabe (Session-orientiert)
+**Link (Code):**  
+[`src/frontend/st/pages/5 Settings.py`](src/frontend/st/pages/5%20Settings.py)
 
-### 5.9.2 Data Settings
-- Löschen ausgewählter Tabellen (mit Sicherheitsabfrage)
-- Initial Ticker Verwaltung (Standardliste vs. Customliste)
-- Begrenzung des frühesten Analyse-Datums (Performance und Fokus)
+![Settings - Overview](rdme_assets/settings_overview.png)
+*Abbildung 5-15: Settings-Übersicht mit expandierbaren Bereichen*
 
-### 5.9.3 Machine Learning Settings
-- Übersicht und Löschung gespeicherter Modelle
-- Konfiguration Training Limits:
-  - minimal erforderliche Zeilenanzahl
-  - maximale Trainingszeilen
+### 5.7.1 Strukturierung in Expander-Bereiche
 
-### 5.9.4 Assistant Settings
-- Auswahl der Ollama-Quelle
-- Modellmanagement inkl. Download falls nicht verfügbar
+Die Settings-Seite nutzt Expander für thematische Gruppierung:
 
-**Abbildung 5-9 (Platzhalter): Settings – Konfigurationsbereiche**  
-`![Settings – Overview](assets/figures/fig_5_9_settings.png)`
+1. **> Global Settings** (zugeklappt)
+2. **> Data Settings** (aufgeklappt im Screenshot)
+3. **> Assistant Settings** (zugeklappt)
+
+Dieses Design:
+- Reduziert visuelle Überladung
+- Ermöglicht fokussierte Konfiguration pro Bereich
+- Klare Trennung der Zuständigkeiten
+
+### 5.7.2 Global Settings
+
+**Ollama-Konfiguration:**
+- Radio-Buttons: Local / Standard
+- Text-Input für Custom Local URL (bei Local-Auswahl)
+- Test-Connection-Button
+
+**Alpha Vantage Key:**
+- Password-Input (masked)
+- Session-basiert (nicht persistent aus Sicherheitsgründen)
+- Info-Text: "This key is only stored in session and not saved permanently"
+
+**Reset-Funktionen:**
+- Button "🔄 Reset All Settings" (mit Bestätigungsdialog)
+- Button "🗑️ Clear All User Data" (destruktiv, doppelte Bestätigung)
+
+### 5.7.3 Data Settings
+
+**Delete Tables:**
+- Multiselect mit allen Tabellen (System + User)
+- Button "🗑️ Delete Selected Tables"
+- Sicherheitsabfrage: "Are you sure? This cannot be undone!"
+
+**Initial Ticker Management:**
+- Radio-Buttons: Standard List / Custom List
+- Bei Custom: Textarea für manuelle Ticker-Eingabe (kommasepariert)
+- Button "💾 Save Ticker List"
+
+**Analysis Date Limit:**
+- Date-Input "Earliest date for analysis"
+- Standardwert: 5 Jahre zurück
+- Zweck: Performance-Optimierung bei großen Datensätzen
+
+### 5.7.4 Machine Learning Settings
+
+**Saved Models Overview:**
+
+Tabelle mit Spalten:
+- Model Name
+- Algorithm
+- File Size (MB)
+- Creation Date
+
+**Aktionen:**
+- Checkbox pro Modell für Mehrfachauswahl
+- Button "🗑️ Delete Selected Models"
+- Button "📥 Download All Models" (ZIP-Export)
+
+**Training Limits:**
+
+Zwei Number-Inputs:
+- **Minimum Rows Required:** Mindestanzahl Zeilen für Training (Standard: 100)
+  - Verhindert Training auf zu kleinen Datensätzen
+  - Fehlermeldung bei Unterschreitung
+  
+- **Maximum Training Rows:** Obergrenze für Training (Standard: 100.000)
+  - Performance-Schutz bei sehr großen Datensätzen
+  - Automatisches Sampling bei Überschreitung
+
+### 5.7.5 Assistant Settings
+
+**Ollama Source:**
+- Dropdown: Container / Host / Local
+- Synchronisiert mit Global Settings
+
+**Model Management:**
+- Text-Input "Model name" (z.B. llama3.1:8b)
+- Button "🔽 Download Model" (wenn nicht verfügbar)
+- Status-Anzeige: "✓ Model available" oder "⚠️ Model not found"
+
+**Auto-Download:**
+- Toggle "Automatically download missing models"
+- Bei Aktivierung: Modelle werden bei Bedarf geladen
 
 ---
 
-## 5.10 Zusammenfassung der Ergebnisse und Bewertung aus Nutzersicht
+## 5.8 Zusammenfassung der Ergebnisse und Bewertung aus Nutzersicht
 
-### 5.10.1 Erreichte Anforderungen
+### 5.8.1 Erreichte Anforderungen
 
 Die Anwendung erfüllt die Kernanforderung einer **anwenderfreundlichen Finanzanalyse-Plattform**, indem sie:
-- mehrere Datenquellen integriert
-- Daten persistiert und verwaltet
-- ML-Training und LLM-Analyse in UI-Workflows übersetzt
-- Ergebnisse verständlich visualisiert oder textuell erklärt
-- zentrale Konfiguration über Settings bereitstellt
-- lokal wie containerisiert betrieben werden kann
 
-### 5.10.2 Stärken des Dashboards
-- **Modularität im UI:** klare Seitenstruktur entlang typischer Workflows  
-- **Niedrige Einstiegshürde:** Setup-Seite und Assistant reduzieren Fehlbedienung  
-- **Exploration + Experiment:** Data-Seite (Exploration) und ML/LLM (Experiment) ergänzen sich  
-- **Persistenz:** gespeicherte Modelle und system_config ermöglichen Wiederverwendung  
-- **Lokaler Betrieb (Privacy):** Ollama lokal/containerisiert ohne Cloud-Abhängigkeit
+**Datenebene:**
+- Mehrere Datenquellen integriert (Yahoo Finance, Alpha Vantage, User-Uploads)
+- Daten persistent verwaltet (SQLite-basiert)
+- Update- und Download-Mechanismen bereitstellt
+- Transparenz über Datenhaltung schafft (Database-Tab)
 
-### 5.10.3 Grenzen und beobachtbare Einschränkungen
-- Große Tabellen (z.B. mehrere Millionen Zeilen) können Ladezeiten verursachen; Sicherheitslimits begrenzen Trainingszeilen.
-- Die ML-Seite stellt primär eine Trainingsumgebung bereit; fachliche Validität hängt stark von sinnvoller Feature/Target-Auswahl ab.
-- LLM-Analysen sind abhängig von Modellqualität, Promptlänge und Datenprobe; Ergebnisse sind qualitativ, nicht deterministisch.
-- Alpha Vantage Limits (Requests pro Minute/Tag) beeinflussen Download-Workflows.
+**Analyse-Ebene:**
+- Explorative Einzelanalysen mit Kennzahlen und Charts ermöglicht
+- Vergleichsanalysen mehrerer Symbole visualisiert
+- Zeitreihen interaktiv darstellt (Zoom, Hover, Filter)
 
-### 5.10.4 Ergebnischarakter
-Insgesamt ist FinSight als **funktionsfähiger Prototyp** mit ausgeprägtem Dashboard-Charakter zu bewerten. Die Anwendung demonstriert die Integration von:
-- Dateninfrastruktur (SQLite, ETL, Updates)
-- klassischer Analytics (Charts, Kennzahlen)
-- ML-Workflows (Training, Evaluation, Model Bundles)
-- LLM-Workflows (Prompting, Analyse, Assistenz)
+**Modellierungs-Ebene:**
+- ML-Training in UI-Workflows übersetzt (keine Coding-Kenntnisse erforderlich)
+- Verschiedene Algorithmen und Konfigurationen unterstützt
+- Zeitreihen-Features (Lag-Mode, Forecast Horizon) integriert
+- Modelle persistent speichert und wiederverwendbar macht
 
-Damit wurde ein umfassendes, interaktives Ergebnis artefaktisch umgesetzt, das sowohl für explorative Nutzung (Analyse & Vergleiche) als auch für experimentelle Modellierung (ML/LLM) geeignet ist.
+**Intelligenz-Ebene:**
+- LLM-basierte Analysen mit strukturierten Prompts ermöglicht
+- Lokalen Betrieb ohne Cloud-Abhängigkeit realisiert
+- Transparenz durch Prompt-Einsicht schafft
+
+**Unterstützungs-Ebene:**
+- Kontextuellen Hilfsassistenten bereitstellt
+- Setup-Guidance für Einstieg bietet
+- Zentrale Konfiguration über Settings erlaubt
+
+### 5.8.2 Stärken des Dashboards aus Nutzersicht
+
+**Modularität und Klarheit:**
+- Klare Seitenstruktur entlang typischer Workflows (Data → ML → LLM → Settings)
+- Konsistente Sidebar/Main-Area-Trennung
+- Intuitive Navigation über Streamlit-Seiten
+
+**Niedrige Einstiegshürde:**
+- Setup-Seite adressiert typische Probleme proaktiv
+- Assistant bietet kontextuelle Hilfe
+- Vorbefüllte Datenbanken ermöglichen sofortigen Start
+
+**Exploration + Experimentation:**
+- Data-Seite für qualitative Exploration (Charts, Kennzahlen)
+- ML/LLM für quantitative/qualitative Experimentation
+- Nahtloser Wechsel zwischen Modi
+
+**Persistenz und Reproduzierbarkeit:**
+- Gespeicherte Modelle als Artefakte
+- Metadaten ermöglichen Nachvollziehbarkeit
+- System-Config für stabile Konfiguration
+
+**Privacy und Selbstbestimmung:**
+- Lokaler Betrieb (Ollama, SQLite) ohne Cloud-Übermittlung
+- User-Uploads bleiben lokal
+- Keine externen Tracking-Mechanismen
+
+### 5.8.3 Grenzen und beobachtbare Einschränkungen
+
+**Performance:**
+- Große Tabellen (>1M Zeilen) verursachen spürbare Ladezeiten
+- UI-Reaktivität leidet bei komplexen DataFrame-Operationen
+- Sicherheitslimits (max. 100k Trainingszeilen) als Workaround
+
+**Methodische Validität:**
+- ML-Seite warnt bei offensichtlichem Data Leakage, erkennt aber nicht alle Fälle
+- Keine Cross-Validation oder Hyperparameter-Tuning (Standard-Settings)
+- Zeitreihen-Validierung vereinfacht (kein Walk-Forward-Testing)
+
+**LLM-Verlässlichkeit:**
+- Ergebnisse qualitativ und nicht-deterministisch
+- Halluzinationen möglich (keine automatische Validierung)
+- Kontextlänge begrenzt (max. 50 Zeilen Sample)
+- Modellqualität variiert stark (kleinere Modelle limitiert)
+
+**Datenaktualität:**
+- Alpha Vantage Limits (5 Calls/Minute) verlangsamen Updates
+- Keine Echtzeit-Daten
+- Manuelle Aktualisierungen erforderlich
+
+### 5.8.4 Ergebnischarakter
+
+Insgesamt ist FinSight als **funktionsfähiger Prototyp mit ausgeprägtem Dashboard-Charakter** zu bewerten. Die Anwendung demonstriert erfolgreich die Integration von:
+
+**Technologische Integration:**
+- Dateninfrastruktur (SQLite, ETL, Multi-Source)
+- Klassische Analytics (Streamlit Charts, Pandas)
+- ML-Workflows (scikit-learn, Joblib)
+- LLM-Workflows (Ollama, Prompt-Engineering)
+
+**Nutzerzentriertes Design:**
+- Konsistente UI-Patterns über alle Seiten
+- Progressive Disclosure (Expander, Tabs)
+- Feedback-Mechanismen (Status, Warnings, Success-Messages)
+- Hilfsstrukturen (Assistant, Setup-Guide)
+
+**Experimenteller Charakter:**
+- Bewusst als "Playground" positioniert
+- Ermöglicht schnelle Baselines, nicht Produktion
+- Balance zwischen Usability und Flexibilität
+
+Damit wurde ein umfassendes, interaktives Ergebnis artefaktisch umgesetzt, das sowohl für:
+- **Explorative Nutzung** (Datenanalyse, Vergleiche, Visualisierung)
+- **Experimentelle Modellierung** (ML-Training, LLM-Analysen)
+- **Bildungszwecke** (Lehre, Selbststudium, Prototyping)
+
+geeignet ist, jedoch bewusst **nicht** für:
+- Produktiven Echtzeit-Handel
+- Regulierte Finanzdienstleistungen
+- Kritische Investitionsentscheidungen ohne zusätzliche Validierung
 
 ---
 
-## 5.11 Hinweise zur Dokumentation der Abbildungen
+## 5.9 Hinweise zur finalen Dokumentation
 
-Für die finale Berichtsversion wird empfohlen, die Platzhalter-Abbildungen durch Screenshots zu ersetzen.  
-Geeignete Screenshots sind insbesondere:
+Die in diesem Kapitel verwendeten Screenshots befinden sich im Ordner `rdme_assets/` und sind wie folgt referenziert:
 
-- Data: Analyseansicht + Vergleichsanalyse + Datenbanken-Tab
-- ML Studio: Einstellungen + DataFrame Preview + Ergebnisansichten (Regression/Klassifikation)
-- Saved Models: Übersicht + Modelldetail + Inferenz-Expander
-- LLM Playground: Verbindungs-Setup + Ergebnis + Prompt-Ansicht
-- Assistant: Chatfenster
-- Settings: Global/Data/ML/Assistant Bereiche
+**Startseite & Navigation:**
+- `start.png` - Startseite mit Welcome/Setup-Tabs
+- `pages.png` - Sidebar-Navigation
 
-Zur konsistenten Referenzierung im Bericht empfiehlt sich ein Ordner, z.B.:  
-`src/frontend/st/assets/figures/` oder `report_assets/figures/`  
-und ein fortlaufendes Abbildungsnummern-Schema.
+**Data-Seite:**
+- `data_sidebar_updates.png` - Update-Funktionen
+- `data_sidebar_upload.png` - Upload-Bereich
+- `data_analysis_single.png` - Single Stock Analysis
+- `data_analysis_metrics.png` - Kennzahlen-Dashboard
+
+**Machine Learning:**
+- `ml_sidebar_settings.png` - Algorithmus und Datenquelle
+- `ml_sidebar_training.png` - Training-Parameter
+- `ml_main_feature_target.png` - Feature/Target-Auswahl
+- `ml_main_forecast_horizon.png` - Forecast Horizon
+
+**LLM Playground:**
+- `llm_sidebar_ollama.png` - Ollama-Konfiguration
+- `llm_sidebar_datasource.png` - Datenquelle
+- `llm_main_feature_target.png` - Feature/Target & Prediction Config
+
+**Assistant & Settings:**
+- `assistant_chat.png` - Chat-Interface
+- `settings_overview.png` - Settings-Bereiche
+
+Für die finale Berichtsversion sind alle Screenshots vorhanden und korrekt eingebunden. Die konsistente Nummerierung (Abbildung 5-1 bis 5-15) ermöglicht klare Referenzierung im Text.
 
 # 6. Diskussion
 
@@ -2674,3 +3312,9 @@ Hinweis: Alle relativen Pfadangaben in diesem Dokument (z.B. db_functions.py) si
 # performance nicht gut
 
 # Andere Datenbank maybe besser
+
+
+
+
+
+
