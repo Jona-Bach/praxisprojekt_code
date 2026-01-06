@@ -162,7 +162,41 @@ def format_date_string(date_str):
                 return date_str  # not parsable, return as-is
 
     return dt.strftime("%d %b %Y")  # z. B. "21 Jan 2025"
+def parse_number(value):
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
 
+    s = str(value).strip()
+
+    # "1.234,56" -> "1234.56"
+    if "." in s and "," in s:
+        s = s.replace(".", "").replace(",", ".")
+    # "24,31" -> "24.31"
+    elif "," in s:
+        s = s.replace(",", ".")
+
+    try:
+        return float(s)
+    except:
+        return None
+
+
+def format_ratio(value, decimals=2, suffix=""):
+    v = parse_number(value)
+    if v is None:
+        return "—"
+    return f"{v:.{decimals}f}{suffix}"
+
+
+def format_percent(value, decimals=2, already_percent=False):
+    v = parse_number(value)
+    if v is None:
+        return "—"
+    if not already_percent:   # falls Rohwert 0.188 => 18.8%
+        v *= 100
+    return f"{v:.{decimals}f}%"
 def format_pe(value, decimals=2):
     if value is None:
         return "—"
@@ -400,9 +434,9 @@ with tab1:
         market_cap_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["market_capitalization"].iloc[0]
         market_cap = format_number(market_cap_str)
         pre_ratio_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["pe_ratio"].iloc[0]
-        pe_ratio = format_pe(pre_ratio_str)
+        pe_ratio = format_ratio(pre_ratio_str, 2, "x")
         price_to_book_ratio_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["price_to_book_ratio"].iloc[0]
-        ptbr = format_number(price_to_book_ratio_str)
+        ptbr = format_ratio(price_to_book_ratio_str, 2)
         
         col7.metric("Market Capitalization", market_cap)
         col8.metric("PE-Ratio", pe_ratio)
@@ -411,14 +445,15 @@ with tab1:
         col10, col11, col12 = st.columns(3)
 
         roe_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["return_on_equity_ttm"].iloc[0]
-        roe = format_number(roe_str)
+        roe = format_percent(roe_str, 2, already_percent=False)
         profit_margin_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["profit_margin_raw"].iloc[0]
-        profit_margin = format_number(profit_margin_str)
+        profit_margin = format_percent(profit_margin_str, 2, already_percent=False)
         beta = up_to_date_av_entries.sort_values("timestamp", ascending=False)["beta_raw"].iloc[0]
+        beta = format_ratio(beta, 2)
 
              
         col10.metric("ROE", roe)
-        col11.metric("Profit-Margin", f"{profit_margin}€")
+        col11.metric("Profit-Margin", f"{profit_margin}")
         col12.metric("Beta", beta)
 
         st.write("")

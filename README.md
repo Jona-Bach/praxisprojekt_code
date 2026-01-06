@@ -2180,6 +2180,7 @@ Das Machine Learning Studio transformiert klassische ML-Workflows in eine GUI-ge
 Die Sidebar fungiert als zentrales Konfigurationspanel für das Modelltraining:
 
 ![ML Sidebar - Einstellungen](rdme_assets/ml_sidebar.png)
+
 *Abbildung 5-7: ML-Sidebar mit Algorithmus-, Datenquellen- und Training-Konfiguration*
 
 **Konfigurationsbereiche:**
@@ -3331,7 +3332,7 @@ Insgesamt stellt FinSight einen erfolgreichen Proof-of-Concept dar, der zeigt, w
 
 Hinweis: Alle relativen Pfadangaben in diesem Dokument (z.B. db_functions.py) sind als Hyperlinks konzipiert, die bei Anzeige im Repository direkt zu den entsprechenden Dateien führen.
 
-
+## Disclaimer: Diese README wurde mithilfe künstlicher Intelligenz überarbeitet, erweitert und sprachlich optimiert.
 
 
 
