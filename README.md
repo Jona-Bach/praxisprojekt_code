@@ -121,8 +121,7 @@
   - [5.8 Zusammenfassung der Ergebnisse und Bewertung aus Nutzersicht](#58-zusammenfassung-der-ergebnisse-und-bewertung-aus-nutzersicht)
     - [5.8.1 Erreichte Anforderungen](#581-erreichte-anforderungen)
     - [5.8.2 Stärken des Dashboards aus Nutzersicht](#582-stärken-des-dashboards-aus-nutzersicht)
-    - [5.8.3 Grenzen und beobachtbare Einschränkungen](#583-grenzen-und-beobachtbare-einschränkungen)
-    - [5.8.4 Ergebnischarakter](#584-ergebnischarakter)
+    - [5.8.3 Ergebnischarakter](#584-ergebnischarakter)
 
 - [6. Diskussion](#6-diskussion)
   - [6.1 Interpretation der Resultate: Zielerreichung und Funktionsumfang](#61-interpretation-der-resultate-zielerreichung-und-funktionsumfang)
@@ -2729,30 +2728,7 @@ Die Anwendung erfüllt die Kernanforderung einer **anwenderfreundlichen Finanzan
 - User-Uploads bleiben lokal
 - Keine externen Tracking-Mechanismen
 
-### 5.8.3 Grenzen und beobachtbare Einschränkungen
-
-**Performance:**
-- Große Tabellen (>1M Zeilen) verursachen spürbare Ladezeiten
-- UI-Reaktivität leidet bei komplexen DataFrame-Operationen
-- Sicherheitslimits (max. 100k Trainingszeilen) als Workaround
-
-**Methodische Validität:**
-- ML-Seite warnt bei offensichtlichem Data Leakage, erkennt aber nicht alle Fälle
-- Keine Cross-Validation oder Hyperparameter-Tuning (Standard-Settings)
-- Zeitreihen-Validierung vereinfacht (kein Walk-Forward-Testing)
-
-**LLM-Verlässlichkeit:**
-- Ergebnisse qualitativ und nicht-deterministisch
-- Halluzinationen möglich (keine automatische Validierung)
-- Kontextlänge begrenzt (max. 50 Zeilen Sample)
-- Modellqualität variiert stark (kleinere Modelle limitiert)
-
-**Datenaktualität:**
-- Alpha Vantage Limits (5 Calls/Minute) verlangsamen Updates
-- Keine Echtzeit-Daten
-- Manuelle Aktualisierungen erforderlich
-
-### 5.8.4 Ergebnischarakter
+### 5.8.3 Ergebnischarakter
 
 Insgesamt ist FinSight als **funktionsfähiger Prototyp mit ausgeprägtem Dashboard-Charakter** zu bewerten. Die Anwendung demonstriert erfolgreich die Integration von:
 
