@@ -21,7 +21,6 @@
     - [2.2.1 Lernparadigmen](#221-lernparadigmen)
     - [2.2.2 Datenaufteilung und Preprocessing](#222-datenaufteilung-und-preprocessing)
     - [2.2.3 Machine Learning-Algorithmen](#223-machine-learning-algorithmen)
-    - [2.2.4 Evaluationsmetriken](#224-evaluationsmetriken)
   - [2.3 Large Language Models (LLMs)](#23-large-language-models-llms)
     - [2.3.1 Grundlagen von Large Language Models](#231-grundlagen-von-large-language-models)
     - [2.3.2 Ollama als lokale LLM-Infrastruktur](#232-ollama-als-lokale-llm-infrastruktur)
@@ -33,7 +32,6 @@
   - [3.3 Datenpipeline und Speicherung](#33-datenpipeline-und-speicherung)
   - [3.4 Datenaufbereitung](#34-datenaufbereitung)
   - [3.5 Datenqualität und Limitationen](#35-datenqualität-und-limitationen)
-  - [3.6 Nutzerbereitgestellte Daten](#36-nutzerbereitgestellte-daten)
 
 - [4. Implementierung](#4-implementierung)
   - [4.1 Systemarchitektur und Technologie-Stack](#41-systemarchitektur-und-technologie-stack)
@@ -414,41 +412,6 @@ Die logistische Regression modelliert die Wahrscheinlichkeit der Zugehörigkeit 
 
 Ein spezifischer Anwendungsfall im Finanzbereich ist die Richtungsklassifikation, bei der vorhergesagt wird, ob der Kurs einer Aktie in einem definierten Zeitraum steigt (Label: 1) oder fällt (Label: 0). Dies transformiert das Regressionsproblem der Kursprognose in ein binäres Klassifikationsproblem. Als Features können technische Indikatoren, Momentum-Kennzahlen oder fundamentale Unternehmenskennzahlen dienen. Die Richtungsklassifikation ist besonders relevant für Handelsstrategien, bei denen die Richtung der Kursbewegung wichtiger ist als die exakte Höhe der Veränderung (Atsalakis & Valavanis, 2009).
 
-#### 2.2.4 Evaluationsmetriken
-
-Die Bewertung der Modellleistung erfolgt anhand quantitativer Metriken, die je nach Aufgabenstellung (Regression oder Klassifikation) variieren.
-
-
-**Accuracy (Genauigkeit)**: Die Accuracy gibt den Anteil korrekt klassifizierter Instanzen an allen Vorhersagen an. Sie wird berechnet als:
-
-**Accuracy = (Anzahl korrekter Vorhersagen) / (Gesamtanzahl Vorhersagen)**
-
-Obwohl Accuracy intuitiv verständlich ist, kann sie bei unbalancierten Datensätzen irreführend sein. *Die wichtigsten Werte für den Parameter scoring bei der Klassifikation sind accuracy (der voreingestellte Wert), roc_auc für die Fläche unter der ROC-Kurve, average_precision für die Fläche unter der Relevanz-Sensitivitäts-Kurve, f1, f1_macro, f1_micro und f1_weighted für den binären F1-Score und dessen unterschiedlich gewichtete Varianten* (Müller & Guido, 2017).
-
-**Precision (Präzision)**: Die Precision misst den Anteil der tatsächlich positiven Fälle unter allen als positiv klassifizierten Instanzen. Sie ist besonders relevant, wenn falsch-positive Vorhersagen hohe Kosten verursachen:
-
-**Precision = True Positives / (True Positives + False Positives)**
-
-Im Finanzkontext bedeutet eine hohe Precision, dass bei einer Vorhersage "Kursanstieg" dieser auch tatsächlich mit hoher Wahrscheinlichkeit eintritt (Sokolova & Lapalme, 2009).
-
-
-**Regressionsmetriken**
-
-**Mean Squared Error (MSE)**: Der mittlere quadratische Fehler ist eine der gebräuchlichsten Metriken für Regressionsaufgaben. Er berechnet die durchschnittliche quadratische Abweichung zwischen vorhergesagten und tatsächlichen Werten:
-
-**MSE = (1/n) × Σ(y_i - ŷ_i)²**
-
-Durch die Quadrierung werden größere Fehler stärker gewichtet, was das MSE sensitiv gegenüber Ausreißern macht (Müller & Guido, 2017).
-
-**Root Mean Squared Error (RMSE)**: Der RMSE ist die Quadratwurzel des MSE und hat den Vorteil, in derselben Einheit wie die Zielgröße ausgedrückt zu werden:
-
-**RMSE = √MSE**
-
-Im Finanzkontext repräsentiert der RMSE die durchschnittliche absolute Abweichung der Kursprognose in Währungseinheiten, was die Interpretation erleichtert.
-
-Hier ist die überarbeitete und erweiterte Version des LLM-Abschnitts:
-
-
 ### 2.3 Large Language Models (LLMs)
 
 Large Language Models stellen eine zentrale Komponente dieser Plattform dar und ermöglichen einen innovativen Vergleich zwischen traditionellen Machine Learning-Verfahren und modernen generativen KI-Ansätzen für die Finanzanalyse. Im Folgenden werden die grundlegenden Konzepte von LLMs sowie die verwendete Infrastruktur erläutert.
@@ -576,18 +539,6 @@ Es werden für die meiste Analyse die adjusted_close Preise verwendet um eine m�
 **Regionale Abdeckung**: Bei der Interpretation ist zu berücksichtigen, dass **Alpha Vantage** in der verwendeten Konfiguration primär **US-börsennotierte** Werte zuverlässig abdeckt. Europäische Titel können abhängig vom Symbolschema und der Datenverfügbarkeit unvollständig sein. Dies ist insbesondere relevant, wenn im Dashboard ein gemischtes Universum (USA/EU) betrachtet wird.
 
 **Datentypen:** Viele der gespeicherten Werte werden zunächst als Strings aus den API-Antworten übernommen und in dieser Form in der Datenbank persistiert. Dies kann in späteren Verarbeitungsschritten (z. B. bei Berechnungen oder Modelltraining) zu Problemen führen. Daher werden die betroffenen Felder in der Machine-Learning-Vorverarbeitung in numerische Datentypen konvertiert. Es ist entsprechend zu berücksichtigen, dass Rohdaten teilweise in String-Form in der Datenbank vorliegen **können**.
-
-
-### 3.6 Nutzerbereitgestellte Daten
-
-Nutzerinnen und Nutzer können eigene Datensätze im Format **CSV** oder **Excel (XLS/XLSX)** hochladen. Nach dem Upload werden die Daten in eine separate Datenbankstruktur integriert und stehen anschließend als Datenbasis für
-- explorative Analysen und Visualisierungen im Dashboard,
-- die Machine-Learning-Komponenten (z. B. Modelltraining/Inference),
-- sowie die LLM-basierte Analyse (z. B. textuelle Zusammenfassung/Interpretation)
-zur Verfügung.
-
-In der aktuellen Implementierung erfolgt beim Upload lediglich eine grundlegende Einbettung in die Datenhaltung. Eine weiterführende Validierung (Schema-Prüfung, Datumsformat, Pflichtspalten, Duplikatbehandlung) ist als Erweiterung sinnvoll, um Datenqualität und Reproduzierbarkeit zu erhöhen.
-
 
 ### Mini-Schema (Tabellarische Übersicht)
 
