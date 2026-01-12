@@ -110,7 +110,7 @@ def auto_convert_numeric_and_datetime(df: pd.DataFrame) -> pd.DataFrame:
 
         # Potenzielle Zeit-/Datums-Spalten erkennen
         if any(k in col_lower for k in ["date", "time", "timestamp"]):
-            dt = pd.to_datetime(col_series, errors="coerce", infer_datetime_format=True)
+            dt = pd.to_datetime(col_series, errors="coerce")
             if dt.notna().mean() > 0.5:
                 df[col] = dt
                 continue  # schon als Datum erkannt
@@ -213,7 +213,7 @@ def detect_time_column(df: pd.DataFrame):
         if any(k in c.lower() for k in keywords):
             # Versuch, diese Spalte in datetime zu casten
             try:
-                converted = pd.to_datetime(df[c], errors="coerce", infer_datetime_format=True)
+                converted = pd.to_datetime(df[c], errors="coerce")
                 if converted.notna().mean() > 0.5:
                     df[c] = converted
                     return c
@@ -1035,8 +1035,27 @@ with tab2:
 
                     feature_cols_b = bundle.get("feature_cols", []) or []
                     st.write(f"**Features (X) – {len(feature_cols_b)} Spalten:**")
+                    
+                    # Feature-Datentypen anzeigen
                     if feature_cols_b:
-                        st.code("\n".join(map(str, feature_cols_b)), language="text")
+                        # Datentypen aus dem Bundle holen (falls gespeichert)
+                        feature_dtypes = bundle.get("feature_dtypes", {})
+                        
+                        # DataFrame für Feature-Übersicht erstellen
+                        feature_info = []
+                        for feat in feature_cols_b:
+                            dtype_str = feature_dtypes.get(feat, "unbekannt")
+                            feature_info.append({
+                                "Feature": feat,
+                                "Datentyp": dtype_str
+                            })
+                        
+                        feature_df = pd.DataFrame(feature_info)
+                        st.dataframe(feature_df, hide_index=True, use_container_width=True)
+                        
+                        # Zusätzlich auch als Code-Block (wie vorher)
+                        with st.expander("📋 Feature-Liste als Text"):
+                            st.code("\n".join(map(str, feature_cols_b)), language="text")
                     else:
                         st.write("_Keine Feature-Liste im Bundle gefunden._")
 
@@ -1055,10 +1074,25 @@ with tab2:
                     except Exception as e:
                         st.warning(f"Download nicht möglich: {e}")
 
+                # Statistiken zu Datentypen anzeigen
+                if feature_cols_b:
+                    feature_dtypes = bundle.get("feature_dtypes", {})
+                    if feature_dtypes:
+                        dtype_counts = {}
+                        for dtype in feature_dtypes.values():
+                            dtype_counts[dtype] = dtype_counts.get(dtype, 0) + 1
+                        
+                        st.markdown("#### 📊 Datentyp-Verteilung")
+                        dtype_stats = pd.DataFrame([
+                            {"Datentyp": dtype, "Anzahl": count, "Anteil (%)": f"{(count/len(feature_cols_b)*100):.2f}"}
+                            for dtype, count in sorted(dtype_counts.items())
+                        ])
+                        st.dataframe(dtype_stats, hide_index=True, use_container_width=True)
+
                 st.info(
-                    "💡 Hinweis: Dieses Modell wurde mit genau den oben gelisteten Feature-Spalten trainiert. "
-                    "Wenn du es später für Vorhersagen verwenden möchtest, musst du dieselben Feature-Spalten "
-                    "in derselben Struktur wieder bereitstellen."
+                    "💡 Hinweis: Dieses Modell wurde mit genau den oben gelisteten Feature-Spalten und deren "
+                    "Datentypen trainiert. Wenn du es später für Vorhersagen verwenden möchtest, musst du "
+                    "dieselben Feature-Spalten mit denselben Datentypen in derselben Struktur wieder bereitstellen."
                 )
 
                 # --- Modell ausprobieren ---
@@ -1077,6 +1111,59 @@ with tab2:
                         )
                     else:
                         st.write(f"Aktuelle Daten: **{len(df_pred)} Zeilen**, **{df_pred.shape[1]} Spalten**.")
+
+                        # Datentyp-Kompatibilitätsprüfung
+                        feature_dtypes = bundle.get("feature_dtypes", {})
+                        if feature_dtypes:
+                            st.markdown("##### 🔍 Datentyp-Kompatibilitätsprüfung")
+                            
+                            compatibility_check = []
+                            all_compatible = True
+                            
+                            for feat in feature_cols_b:
+                                expected_dtype = feature_dtypes.get(feat, "unbekannt")
+                                
+                                if feat in df_pred.columns:
+                                    actual_dtype = str(df_pred[feat].dtype)
+                                    
+                                    # Vereinfachte Kompatibilitätsprüfung
+                                    is_compatible = (
+                                        (expected_dtype.startswith("float") and actual_dtype.startswith("float")) or
+                                        (expected_dtype.startswith("int") and actual_dtype.startswith("int")) or
+                                        (expected_dtype == "object" and actual_dtype == "object") or
+                                        (expected_dtype == "category" and actual_dtype == "category") or
+                                        (expected_dtype == actual_dtype)
+                                    )
+                                    
+                                    status = "✅" if is_compatible else "⚠️"
+                                    if not is_compatible:
+                                        all_compatible = False
+                                    
+                                    compatibility_check.append({
+                                        "Feature": feat,
+                                        "Erwartet": expected_dtype,
+                                        "Aktuell": actual_dtype,
+                                        "Status": status
+                                    })
+                                else:
+                                    compatibility_check.append({
+                                        "Feature": feat,
+                                        "Erwartet": expected_dtype,
+                                        "Aktuell": "❌ fehlt",
+                                        "Status": "❌"
+                                    })
+                                    all_compatible = False
+                            
+                            compat_df = pd.DataFrame(compatibility_check)
+                            st.dataframe(compat_df, hide_index=True, use_container_width=True)
+                            
+                            if not all_compatible:
+                                st.warning(
+                                    "⚠️ Achtung: Es gibt Inkompatibilitäten zwischen den erwarteten und aktuellen Datentypen. "
+                                    "Die Vorhersage könnte fehlschlagen oder ungenaue Ergebnisse liefern."
+                                )
+                            else:
+                                st.success("✅ Alle Features sind kompatibel!")
 
                         time_col_pred = None
                         if bundle.get("time_series_mode"):

@@ -148,6 +148,92 @@ with st.expander("Data Settings"):
             confirm_delete(choice)
 
     st.divider()
+    with st.expander("Delete ML Models"):
+        import os
+        import glob
+        
+        models_path = "saved_models"
+        
+        # Prüfen ob Ordner existiert
+        if not os.path.exists(models_path):
+            st.info("No saved_models folder found")
+        else:
+            # Alle .pkl Dateien finden
+            model_files = glob.glob(os.path.join(models_path, "*.pkl"))
+            
+            if len(model_files) == 0:
+                st.info("No ML models found in saved_models folder")
+            else:
+                # Liste der Modellnamen (ohne Pfad)
+                model_names = [os.path.basename(f) for f in model_files]
+                
+                st.write(f"**{len(model_names)} model(s) found:**")
+                
+                # Modell auswählen
+                selected_model = st.selectbox("Choose model to delete:", model_names)
+                
+                @st.dialog("⚠️ Confirm Deletion!")
+                def confirm_delete_model(model_name: str):
+                    st.error(f"Are you sure you want to delete model **{model_name}**?")
+                    st.warning("This action cannot be undone!")
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        if st.button("Yes, delete", type="primary", key="confirm_model_delete"):
+                            try:
+                                model_path = os.path.join(models_path, model_name)
+                                os.remove(model_path)
+                                st.success(f"Model {model_name} successfully deleted!")
+                                st.session_state["_refresh"] = True
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Error deleting model: {str(e)}")
+                    
+                    with col2:
+                        if st.button("Cancel", key="cancel_model_delete"):
+                            st.info("Cancelled")
+                            st.rerun()
+                
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if st.button("Delete Selected Model", type="secondary"):
+                        confirm_delete_model(selected_model)
+                
+                with col2:
+                    if st.button("Delete All Models", type="secondary"):
+                        @st.dialog("⚠️ Delete All Models!")
+                        def confirm_delete_all():
+                            st.error(f"Are you sure you want to delete **ALL {len(model_names)} models**?")
+                            st.warning("This action cannot be undone!")
+                            
+                            if st.button("Yes, delete all", type="primary"):
+                                try:
+                                    deleted_count = 0
+                                    for model_file in model_files:
+                                        os.remove(model_file)
+                                        deleted_count += 1
+                                    st.success(f"Successfully deleted {deleted_count} models!")
+                                    st.session_state["_refresh"] = True
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Error deleting models: {str(e)}")
+                            
+                            if st.button("Cancel"):
+                                st.info("Cancelled")
+                                st.rerun()
+                        
+                        confirm_delete_all()
+                
+                # Zeige Liste aller Modelle an
+                with st.expander("Show all models"):
+                    for idx, model_name in enumerate(model_names, 1):
+                        model_path = os.path.join(models_path, model_name)
+                        file_size = os.path.getsize(model_path) / 1024  # in KB
+                        st.text(f"{idx}. {model_name} ({file_size:.2f} KB)")
+
+    st.divider()
     st.subheader("Initial Tickers loading:")
     with st.container():
         st.caption("""Here you can see the selected tickers that are loaded in your Databse in the beginning.
