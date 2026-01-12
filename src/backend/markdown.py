@@ -447,6 +447,9 @@ An integrated AI assistant is available to help you navigate and use the platfor
 - Increase timeout in sidebar
 - Check system resources (RAM/CPU usage)
 
+## Important
+Sometimes changes in this dashboard don’t appear immediately and may require one or two refreshes. If your updates aren’t visible right away, don’t worry—refresh the page or navigate between tabs a couple of times and the changes should show up.
+
 ---
 
 ## 🆘 **Getting Help**
@@ -491,5 +494,11 @@ FinSight helps you analyze stocks and compare **traditional regression-based mod
   - Use the integrated AI assistant to help with navigation and getting things done faster inside the platform.
   - Configure the assistant’s model and Ollama source in **Settings** (local vs. container).
 
-> **Note:** Some Functions may require an **Alpha Vantage API key** set in **Settings → Global Settings** (stored only for the current session)."""
+> **Note:** Some Functions may require an **Alpha Vantage API key** set in **Settings → Global Settings** (stored only for the current session).
+
+## Important
+Sometimes changes in this dashboard don’t appear immediately and may require one or two refreshes. If your updates aren’t visible right away, don’t worry—refresh the page or navigate between tabs a couple of times and the changes should show up.
+"""
+
+
     return md
