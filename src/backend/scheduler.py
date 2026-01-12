@@ -64,7 +64,7 @@ def load_initial_data():
             status_pricing_data.write(f"Fetched Pricing Data for: {ticker}")
             download_yf_company_info(tickers=[ticker])
             download_yf_pricing_raw_timeperiod(tickers_to_download=[ticker], startdate=timeperiod_for_download)
-            download_price_history(start=timeperiod_for_download)
+            download_price_history(start=timeperiod_for_download, tickers_to_download=[ticker])
             status_pricing_data.write(f"Fetched Data for: {ticker}")
             print(f"{ticker} added to Database!")
             st.success(f"{ticker} was added successfully to the Database!")
