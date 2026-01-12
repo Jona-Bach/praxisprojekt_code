@@ -132,6 +132,7 @@
     - [5.9.7 LLM-gestützte Finanzanalyse](#597-llm-gestützte-finanzanalyse)
     - [5.9.8 Interaktive Hilfestellung durch den Assistenten](#598-interaktive-hilfestellung-durch-den-assistenten)
     - [5.9.9 Zusammenfassung und Erkenntnisgewinn](#599-zusammenfassung-und-erkenntnisgewinn)
+  - [5.10 Workflow-Grafik](#510-workflow-grafik)
 
 - [6. Diskussion](#6-diskussion)
   - [6.1 Interpretation der Resultate: Zielerreichung und Funktionsumfang](#61-interpretation-der-resultate-zielerreichung-und-funktionsumfang)
@@ -2907,8 +2908,9 @@ Durch diesen vollständigen Workflow hat der Nutzer:
 
 Die Plattform hat damit ihr Hauptziel erreicht: Sie ermöglicht Nutzern ohne tiefgreifende technische Vorkenntnisse eine strukturierte, methodisch fundierte Aktienanalyse unter Verwendung moderner Data Science- und KI-Technologien.
 
+## 5.10 Workflow-Grafik
 ![Beispiel-Workflow](rdme_assets/PraxisprojektWorkflowBG.png)
-*Abbildung: Abstrakte Darstellung des BeispielWorkflows*
+*Abbildung: Abstrakte Darstellung des Beispiel-Workflows*
 
 
 
