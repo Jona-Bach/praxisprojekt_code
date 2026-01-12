@@ -199,7 +199,7 @@ Build your own machine learning models with the following options:
 
 **Sidebar Configuration:**
 - **Algorithm:** Choose from Linear Regression, Decision Tree, Random Forest, Logistic Regression, or Direction Classification
-- **Data Source:** Select from Price History, Single Stock, Alphavantage, or User Tables
+- **Data Source:** Select from Entire Yahoo Finance Pricing Table, Yahoo Finance Pricing Single Stock, Alphavantage, or User Tables
 - **Test Set Size:** Adjust train/test split (default: 20%)
 - **Feature Scaling:** Enable StandardScaler for normalization
 - **Time Series Mode:** Generate lag features automatically
