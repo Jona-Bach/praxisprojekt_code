@@ -533,7 +533,10 @@ with tab1:
             )
 
             st.plotly_chart(fig, width="stretch")
-        plot_price_history(ticker_to_analyze)
+        if not ticker_to_analyze:
+            pass
+        else:
+            plot_price_history(ticker_to_analyze)
 
     st.divider()
     st.header("Compared Stock Analysis")
