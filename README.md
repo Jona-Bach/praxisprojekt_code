@@ -2890,14 +2890,7 @@ Während der Arbeit mit der Machine Learning-Seite stellt der Nutzer fest, dass 
    Learning-Seite und wann sollte ich diese verwenden?
    ```
 
-4. **Assistenten-Response**: Das LLM generiert eine kontextbezogene Erklärung:
-   - Definition von Zeitreihenanalyse
-   - Unterschied zu Cross-Sectional-Analysen
-   - Relevanz für Finanzdaten (Autokorrelation, Trends)
-   - Empfehlung zur korrekten Train/Test-Split-Strategie bei Zeitreihendaten
-   - Hinweis auf Data-Leakage-Problematik
-
-5. **Anwendung des Wissens**: Mit diesem neu erworbenen Verständnis kehrt der Nutzer zur ML-Seite zurück und kann nun fundierte Entscheidungen bezüglich der Zeitreihen-Einstellungen treffen.
+4. **Anwendung des Wissens**: Das LLM generiert eine kontextbezogene Erklärung und mit diesem neu erworbenen Verständnis kehrt der Nutzer zur ML-Seite zurück und kann nun fundierte Entscheidungen bezüglich der Zeitreihen-Einstellungen treffen.
 
 ### 5.9.9 Zusammenfassung und Erkenntnisgewinn
 
