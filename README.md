@@ -2906,6 +2906,11 @@ Durch diesen vollständigen Workflow hat der Nutzer:
 
 Die Plattform hat damit ihr Hauptziel erreicht: Sie ermöglicht Nutzern ohne tiefgreifende technische Vorkenntnisse eine strukturierte, methodisch fundierte Aktienanalyse unter Verwendung moderner Data Science- und KI-Technologien.
 
+![Beispielworkflow](rdme_assets/Praxisprojekt Workflow.png)
+*Abbildung: Abstrakte Darstellung des BeispielWorkflows*
+
+
+
 # 6. Diskussion
 
 Dieses Kapitel reflektiert die erzielten Resultate des Praxisprojekts „FinSight" vor dem Hintergrund der initialen Zielsetzung und ordnet die realisierten Funktionalitäten kritisch ein. Im Fokus stehen dabei sowohl die erfolgreiche Erfüllung der Kernanforderungen als auch die identifizierten Limitationen, die die Qualität, Skalierbarkeit und fachliche Validität der Anwendung beeinflussen. Die Diskussion gliedert sich in zwei Hauptabschnitte: die Interpretation der Resultate im Kontext der Projektziele (6.1) sowie die systematische Analyse von Threats to Validity, d.h. den Faktoren, die die Aussagekraft und Verlässlichkeit der Ergebnisse einschränken (6.2).
