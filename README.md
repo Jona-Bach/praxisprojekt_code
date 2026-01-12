@@ -2761,6 +2761,23 @@ geeignet ist, jedoch bewusst **nicht** für:
 
 ---
 
+## 5.9 Beispielworkflow: Analyse einer Apple-Aktie aus Nutzersicht
+
+Dieser Abschnitt demonstriert einen vollständigen Analyse-Workflow aus der Perspektive eines konkreten Nutzers. Damit sollen die Ergebnisse dieses Projektes praktisch dargestellt werden und wie diese Applikation ihr Ziel trifft, Nutzern bei der Analyse eine Aktie zu untersützen.
+
+### 5.9.1 Die Ausgangssituation
+- Ein Nutzer möchte mithilfe von FinSight eine Analyse der Aktie von Apple vornehmen
+- Hierfür möchte er sowohl Machine Learning algorithmen als auch LLM Techniken verwenden um euíne vollständige Analyse vorzunegmen und diese beiden Verfahren zu vergleichen
+
+### 5.9.2 Start & Setup
+- Der Nutzer startet die Applikation (Lokal oder über Docker) und wechselt zum Setup Tab.
+- Er befolgt die Schritte um die Applikation einzurichten und prüft ob eine Ollama-Verbindung besteht (ggf. passt er in den Einstellungen die Konfiguration an)
+- Er hinterlegt den angelegten Alpha-Vantage API Key in den Globalen Einstellungen
+
+### 5.9.3 Daten Beschaffung
+- Der Nutzer wechselt zu den Data-Settings und ändert die Initiale liste der Ticker so ab, dass nur Apple geladen wird (Da er nur die braucht)
+- Mit dem Knopf "Load Data" läd er sich die neue Liste 
+
 # 6. Diskussion
 
 Dieses Kapitel reflektiert die erzielten Resultate des Praxisprojekts „FinSight" vor dem Hintergrund der initialen Zielsetzung und ordnet die realisierten Funktionalitäten kritisch ein. Im Fokus stehen dabei sowohl die erfolgreiche Erfüllung der Kernanforderungen als auch die identifizierten Limitationen, die die Qualität, Skalierbarkeit und fachliche Validität der Anwendung beeinflussen. Die Diskussion gliedert sich in zwei Hauptabschnitte: die Interpretation der Resultate im Kontext der Projektziele (6.1) sowie die systematische Analyse von Threats to Validity, d.h. den Faktoren, die die Aussagekraft und Verlässlichkeit der Ergebnisse einschränken (6.2).

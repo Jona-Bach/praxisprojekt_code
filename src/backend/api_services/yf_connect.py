@@ -9,7 +9,7 @@ from backend.data_model import TICKERS, tickers_list_new_for_ml, last_dats
 stock_list = TICKERS
 all_data = {}
 
-def download_yf_pricing_raw_timeperiod(tickers_to_download :list, startdate : str = "2024-01-01", enddate : str = "2025-01-01", interval_p : str = "1d"):
+def download_yf_pricing_raw_timeperiod(tickers_to_download :list, startdate : str = "2020-01-01", enddate : str = "2025-01-01", interval_p : str = "1d"):
     for t in tickers_to_download:
         print(f"Lade Daten für {t} ...")
 

@@ -6,6 +6,7 @@ from backend.database.db_functions import get_table_names, delete_table, add_sys
 from backend.llm_functions import check_connection
 from backend.data_model import initial_tickers, TICKERS
 from backend.scheduler import load_initial_data
+from backend.markdown import markdown_setup, markdown_welcome
 
 #__________________________Header____________________________
 
@@ -47,6 +48,10 @@ with tab1:
     st.image(str(img_path_fsold))
     st.title("")
     st.divider()
+    st.markdown(markdown_welcome())
+
+with tab2:
+    st.markdown(markdown_setup())
 
 
  
