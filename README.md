@@ -2352,6 +2352,7 @@ Der LLM Playground ergänzt klassische ML-Workflows durch sprachbasierte Analyse
 Die Sidebar gliedert sich in zwei Hauptbereiche:
 
 ![LLM Sidebar - Ollama Settings](rdme_assets/llm_sidebar.png)
+
 *Abbildung 5-11: Ollama-Konfiguration mit Verbindungstest und Modellverwaltung*
 
 **⚙️ Ollama Settings:**
@@ -2906,7 +2907,7 @@ Durch diesen vollständigen Workflow hat der Nutzer:
 
 Die Plattform hat damit ihr Hauptziel erreicht: Sie ermöglicht Nutzern ohne tiefgreifende technische Vorkenntnisse eine strukturierte, methodisch fundierte Aktienanalyse unter Verwendung moderner Data Science- und KI-Technologien.
 
-![Beispielworkflow](rdme_assets/Praxisprojekt Workflow.png)
+![Beispiel-Workflow](rdme_assets/PraxisprojektWorkflow.png)
 *Abbildung: Abstrakte Darstellung des BeispielWorkflows*
 
 
