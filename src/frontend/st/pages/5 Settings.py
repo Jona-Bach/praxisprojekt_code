@@ -81,6 +81,45 @@ with st.expander("Global Settings"):
                 ollama_config_dic = None
             except Exception as e:
                 st.error(e)
+        
+    st.divider()
+
+# ---------------------- Alpha Vantage API Key (Session State) ----------------------
+    st.subheader("🔑 Alpha Vantage API Key")
+
+    # Session-State initialisieren
+    if "alpha_vantage_key" not in st.session_state:
+        st.session_state["alpha_vantage_key"] = ""
+
+    # Eingabe (separat, damit erst per Button gespeichert wird)
+    key_input = st.text_input(
+        "Enter your Alpha Vantage API Key",
+        value=st.session_state["alpha_vantage_key"],
+        type="password",
+        help="Stored only in the current Streamlit session (not saved permanently).",
+    )
+
+    col_save, col_clear = st.columns([1, 1])
+
+    with col_save:
+        if st.button("💾 Save API Key"):
+            st.session_state["alpha_vantage_key"] = key_input.strip()
+            if st.session_state["alpha_vantage_key"]:
+                masked = "•" * max(0, len(st.session_state["alpha_vantage_key"]) - 4) + st.session_state["alpha_vantage_key"][-4:]
+                st.success(f"Alpha Vantage key saved for this session: {masked}")
+            else:
+                st.warning("API Key is empty. Nothing was saved.")
+
+    with col_clear:
+        if st.button("🧹 Clear API Key"):
+            st.session_state["alpha_vantage_key"] = ""
+            st.info("Alpha Vantage key cleared for this session.")
+
+    # Status anzeigen
+    if st.session_state["alpha_vantage_key"]:
+        st.caption("Status: ✅ API Key is set for this session.")
+    else:
+        st.caption("Status: ℹ️ No API Key set.")
 
 
 
