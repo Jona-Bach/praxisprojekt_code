@@ -430,38 +430,40 @@ with tab1:
                 up_to_date_av_entries = get_processed_entries_by_symbol(
                     "alphavantage_processed_kpi", ticker_to_analyze
                 )
+        try:
+            data_updated_time = up_to_date_av_entries.sort_values("timestamp", ascending=False)["timestamp"].iloc[0]
 
-        data_updated_time = up_to_date_av_entries.sort_values("timestamp", ascending=False)["timestamp"].iloc[0]
+            market_cap_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["market_capitalization"].iloc[0]
+            market_cap = format_number(market_cap_str)
+            pre_ratio_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["pe_ratio"].iloc[0]
+            pe_ratio = format_ratio(pre_ratio_str, 2, "x")
+            price_to_book_ratio_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["price_to_book_ratio"].iloc[0]
+            ptbr = format_ratio(price_to_book_ratio_str, 2)
+            
+            col7.metric("Market Capitalization", market_cap)
+            col8.metric("PE-Ratio", pe_ratio)
+            col9.metric("Price/Book", price_to_book_ratio_str)
 
-        market_cap_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["market_capitalization"].iloc[0]
-        market_cap = format_number(market_cap_str)
-        pre_ratio_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["pe_ratio"].iloc[0]
-        pe_ratio = format_ratio(pre_ratio_str, 2, "x")
-        price_to_book_ratio_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["price_to_book_ratio"].iloc[0]
-        ptbr = format_ratio(price_to_book_ratio_str, 2)
-        
-        col7.metric("Market Capitalization", market_cap)
-        col8.metric("PE-Ratio", pe_ratio)
-        col9.metric("Price/Book", price_to_book_ratio_str)
+            col10, col11, col12 = st.columns(3)
 
-        col10, col11, col12 = st.columns(3)
+            roe_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["return_on_equity_ttm"].iloc[0]
+            roe = format_percent(roe_str, 2, already_percent=False)
+            profit_margin_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["profit_margin_raw"].iloc[0]
+            profit_margin = format_percent(profit_margin_str, 2, already_percent=False)
+            beta = up_to_date_av_entries.sort_values("timestamp", ascending=False)["beta_raw"].iloc[0]
+            beta = format_ratio(beta, 2)
 
-        roe_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["return_on_equity_ttm"].iloc[0]
-        roe = format_percent(roe_str, 2, already_percent=False)
-        profit_margin_str = up_to_date_av_entries.sort_values("timestamp", ascending=False)["profit_margin_raw"].iloc[0]
-        profit_margin = format_percent(profit_margin_str, 2, already_percent=False)
-        beta = up_to_date_av_entries.sort_values("timestamp", ascending=False)["beta_raw"].iloc[0]
-        beta = format_ratio(beta, 2)
+                
+            col10.metric("ROE", roe)
+            col11.metric("Profit-Margin", f"{profit_margin}")
+            col12.metric("Beta", beta)
 
-             
-        col10.metric("ROE", roe)
-        col11.metric("Profit-Margin", f"{profit_margin}")
-        col12.metric("Beta", beta)
+            st.write("")
+            st.caption(f"Last Updated: {format_date_string(data_updated_time)}")
+            st.divider()
+        except Exception as e:
+            st.warning("Missing Data")
 
-        st.write("")
-        st.caption(f"Last Updated: {format_date_string(data_updated_time)}")
-        st.divider()
-        
         def plot_price_history(ticker: str):
             # Pricing-Daten laden
             pricing_ticker_data = get_yf_price_history(ticker)
@@ -548,7 +550,7 @@ with tab1:
             # --- Daten aller Ticker für globales Mindestdatum laden ---
             all_data = {}
             for stock in tickers:
-                df = get_yf_price_history(stock)
+                df = get_yf_pricing_raw(stock)
                 if df.empty:
                     st.warning(f"No data for {stock}")
                     continue
