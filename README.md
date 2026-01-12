@@ -122,6 +122,7 @@
     - [5.8.1 Erreichte Anforderungen](#581-erreichte-anforderungen)
     - [5.8.2 Stärken des Dashboards aus Nutzersicht](#582-stärken-des-dashboards-aus-nutzersicht)
     - [5.8.3 Ergebnischarakter](#584-ergebnischarakter)
+  - [5.9 Beispielworkflow: Analyse einer Aktie aus Nutzersicht](#59-beispielworkflow-analyse-einer-aktie-aus-nutzersicht)
 
 - [6. Diskussion](#6-diskussion)
   - [6.1 Interpretation der Resultate: Zielerreichung und Funktionsumfang](#61-interpretation-der-resultate-zielerreichung-und-funktionsumfang)
@@ -2763,52 +2764,145 @@ geeignet ist, jedoch bewusst **nicht** für:
 
 ## 5.9 Beispielworkflow: Analyse einer Aktie aus Nutzersicht
 
-Dieser Abschnitt demonstriert einen vollständigen Analyse-Workflow aus der Perspektive eines konkreten Nutzers. Damit sollen die Ergebnisse dieses Projektes praktisch dargestellt werden und wie diese Applikation ihr Ziel trifft, Nutzern bei der Analyse eine Aktie zu untersützen.
+Dieser Abschnitt demonstriert einen vollständigen Analyse-Workflow aus der Perspektive eines konkreten Nutzers. Damit soll die praktische Anwendbarkeit der implementierten Funktionalitäten verdeutlicht und aufgezeigt werden, wie die Applikation ihr Ziel erreicht, Nutzer bei der fundierten Aktienanalyse zu unterstützen. Der Workflow illustriert dabei sowohl die Anwendung traditioneller Machine Learning-Verfahren als auch moderner LLM-basierter Analysetechniken.
 
-### 5.9.1 Die Ausgangssituation
-- Ein Nutzer möchte mithilfe von FinSight eine Analyse der Aktie von Apple vornehmen
-- Hierfür möchte er sowohl Machine Learning algorithmen als auch LLM Techniken verwenden um euíne vollständige Analyse vorzunegmen und diese beiden Verfahren zu vergleichen
+### 5.9.1 Ausgangssituation und Zielsetzung
 
-### 5.9.2 Start & Setup
-- Der Nutzer startet die Applikation (Lokal oder über Docker) und wechselt zum Setup Tab.
-- Er befolgt die Schritte um die Applikation einzurichten und prüft ob eine Ollama-Verbindung besteht (ggf. passt er in den Einstellungen die Konfiguration an)
-- Er hinterlegt den angelegten Alpha-Vantage API Key in den Globalen Einstellungen
+Ein Nutzer möchte mithilfe von FinSight eine umfassende Analyse der Apple-Aktie (AAPL) durchführen. Sein Ziel ist es, sowohl traditionelle Machine Learning-Algorithmen als auch Large Language Model-Techniken einzusetzen, um eine ganzheitliche Bewertung zu erhalten und beide Verfahren hinsichtlich ihrer Aussagekraft und Anwendbarkeit zu vergleichen. Zusätzlich plant er einen Vergleich mit der Microsoft-Aktie, um relative Marktpositionen zu evaluieren.
 
-### 5.9.3 Daten Beschaffung
-- Der Nutzer wechselt zu den Data-Settings und ändert die Initiale liste der Ticker so ab, dass nur Apple geladen wird (Da er nur die braucht)
-- Er Überprüft unter Anaylsis Settings das der Zeitraum für den Download seiner Ticker stimmt.
-- Mit dem Knopf "Load Data" läd er sich die neue Aktien Daten in seine Datenbank
+### 5.9.2 Start und initiale Konfiguration
 
-### 5.9.4 Grundlegende Analyse
-- Der Nutzer wechselt zur "Data" Page unter den Analysis Tab
-- im Dropdown sieht er nun seine Apple Aktie
-- Er Schaut sich auf der Seite die Beschreibung und Infos der Aktie an. Weiter unten findet er weitere Key Metriken und einen Graf der Close Aktie von Apple mit dem er die History also die Entwicklung des Preises ansehen kann
+Der Nutzer startet die Applikation entweder lokal oder über Docker Compose und gelangt zunächst zur Welcome-Seite. Von dort wechselt er zum **Setup-Tab**, um die Grundkonfiguration vorzunehmen:
 
-### 5.9.5 Vergleichende Analyse
-- Der Nutzer will die Apple Aktie zur Microsoft Aktie vergleichen
-- Dazu läd er links in der Seitenleiste die Microsoft Aktie über "Download Ticker Data" herunter
-- Nun kann er unten in der "Compared Stock Analysis" beide Aktien miteinander vergleichen
+1. **Ollama-Verbindungsprüfung**: Er überprüft die Konnektivität zur Ollama-Instanz und stellt sicher, dass das gewünschte LLM-Modell verfügbar ist. Falls notwendig, passt er in den **Settings** unter "Assistant Settings" die Verbindungskonfiguration an (local/host/container).
 
-### 5.9.6 Machine Learning
-- Der Nutzer möchte nun eigene Daten die er gesammelt hat mithilfe der voreingestellten Konfigurationen analysieren
-- Links auf der Data Seite läd er dazu seine Daten als Excel hoch und wählt die option "replace" damit diese vollständig reingeladen werden
-- Unter dem Data Settings Tab kontrolliert er anschließened ob die Daten vollständig hochgeladeb wurden
-- Er wechselt zur Machine Learning Seite und wählt in der Sidebar seine Tabelle und das gewünschte Verfahren aus
-- Durch die Vorschau kann er kontrollieren, dass er optimale Einstellungen trifft, die Features auswählen, TestSet größe und andere Einstellungen
-- der Nutzer trainiert sein Modell und sieht seine erreichte Genaugikeit durch die angezeigten Metriken
-- Er wechselt zu dem "Saved models" Tab und schaut sich sein gespeichertes Modell an und läd es sich runter um damit selber weiteruuarbeiten
+2. **API-Key-Hinterlegung**: Der Nutzer trägt seinen zuvor bei Alpha Vantage angelegten API-Key in das entsprechende Eingabefeld ein und speichert diesen im Session State.
 
-### 5.9.7 LLM Analyse
-- Der Nutzer wechselt zu der "LLM Playground" Seite 
-- Er wählt sich Links seine Daten aus der Sidebar aus und fügt einen eigenen prompt hinzu der noch politische Aspekte hineinbringt
-- Er wählt andere Einstellungen wie das Verfahren dass das Llm übernehmen soll und wieviele Zeilen Seiner Daten es dem Modell gibt und generiert den prompt
-- Er sieht sich den insgesamte erstellten Prompt an und schaut sich anschlließebd die Ausgabe zu seinen Daten an
+Mit abgeschlossener Grundkonfiguration ist die Plattform einsatzbereit.
 
-### 5.9.8 Hilfestellung
-- Der Nutzer fragt sich jetzt, was die Zeitreihenanalyse einstellung bei der ML Seite bedeutet und wechselt zur Assistenten Seite
-- Der Nutzer stellt fest, dass er in den Settings unter Assistant Settings noch die Source einstellen muss
-- Danach stellt er dem Assistenten die Frage warum man eine Zeitreihen Analyse machen kann und was das ist.
-- Mit den gewonnen erkenntnissen kann der Nutzer weiterarbeiten
+### 5.9.3 Datenbeschaffung und -vorbereitung
+
+Der Nutzer navigiert zur **Settings-Seite**, um die Datengrundlage für seine Analyse vorzubereiten:
+
+1. **Anpassung der Initial-Ticker-Liste**: Unter "Data Settings" modifiziert er die Initial-Ticker-Liste und reduziert diese auf das Symbol "AAPL" (Apple), da er sich zunächst ausschließlich auf diese Aktie fokussieren möchte. Dies optimiert die Ladezeit und vermeidet unnötige API-Anfragen.
+
+2. **Verifizierung der Download-Parameter**: Unter "Analysis Settings" überprüft er, ob der Zeitraum für den historischen Datendownload seinen Anforderungen entspricht (z.B. 2020-2025 für eine Fünf-Jahres-Analyse).
+
+3. **Daten-Download**: Durch Betätigung des Buttons "Load Data" initiiert er den Download der Apple-Kursdaten sowie der fundamentalen Kennzahlen. Das System lädt die Daten über die yfinance- und Alpha-Vantage-APIs herunter und speichert diese in den entsprechenden Datenbanktabellen.
+
+Der Nutzer erhält eine Bestätigung über den erfolgreichen Abschluss des Ladevorgangs und kann nun mit der Analyse beginnen.
+
+### 5.9.4 Explorative Datenanalyse
+
+Der Nutzer wechselt zur **Data-Seite** unter dem "Analysis"-Bereich:
+
+1. **Ticker-Auswahl**: Im Dropdown-Menü wählt er "AAPL" aus der Liste der verfügbaren Aktien.
+
+2. **Unternehmensübersicht**: Er verschafft sich zunächst einen Überblick über grundlegende Unternehmensinformationen wie Sektor, Industrie, Land und Unternehmensbeschreibung, die aus der `yf_company_info`-Tabelle geladen werden.
+
+3. **Kennzahlen-Analyse**: Im weiteren Verlauf der Seite findet er eine Übersicht fundamentaler Kennzahlen (z.B. P/E Ratio, Market Cap, Beta, ROE), die eine erste quantitative Einschätzung ermöglichen.
+
+4. **Kurshistorie-Visualisierung**: Ein interaktiver Plotly-Chart visualisiert die historische Preisentwicklung (Close-Kurse) der Apple-Aktie. Der Nutzer kann den Chart zoomen, einzelne Zeitperioden fokussieren und durch Hover-Tooltips detaillierte Tageswerte einsehen. Diese Visualisierung offenbart Trends, Volatilitätsmuster und potenzielle Wendepunkte in der Kursentwicklung.
+
+### 5.9.5 Vergleichende Aktienanalyse
+
+Um die Performance von Apple in einen breiteren Kontext zu setzen, entscheidet sich der Nutzer für einen Vergleich mit der Microsoft-Aktie (MSFT):
+
+1. **Zusätzlicher Datendownload**: In der Sidebar der Data-Seite nutzt er die Funktion "Download Ticker Data", gibt "MSFT" ein und lädt die entsprechenden Daten herunter.
+
+2. **Vergleichsansicht**: Im Bereich "Compared Stock Analysis" (weiter unten auf der Seite) wählt er beide Ticker (AAPL und MSFT) aus. Die Plattform generiert eine vergleichende Darstellung, die folgende Aspekte umfasst:
+   - Side-by-side Darstellung fundamentaler Kennzahlen
+   - Überlagerte Kurscharts zur Visualisierung relativer Performance
+   - Korrelationsanalyse der Kursbewegungen
+
+Diese Vergleichsperspektive ermöglicht es dem Nutzer, Apple's Marktposition relativ zu einem direkten Wettbewerber zu bewerten.
+
+### 5.9.6 Machine Learning-basierte Analyse
+
+Der Nutzer möchte nun über die explorative Analyse hinausgehen und eigene, extern gesammelte Datensätze mithilfe der implementierten ML-Algorithmen untersuchen:
+
+1. **Daten-Upload**: Auf der Data-Seite verwendet er die Upload-Funktion in der Sidebar, um seine vorbereiteten Daten als Excel-Datei hochzuladen. Er wählt die Option "Replace", um eine vollständige Neuladung der Tabelle zu gewährleisten und potenzielle Inkonsistenzen zu vermeiden.
+
+2. **Datenvalidierung**: Unter dem "Data Settings"-Tab überprüft er, ob seine hochgeladenen Daten korrekt in der `users_database.db` gespeichert wurden und ob das Schema korrekt interpretiert wurde (Spaltennamen, Datentypen).
+
+3. **ML-Konfiguration**: Der Nutzer navigiert zur **Machine Learning-Seite** und nimmt folgende Konfigurationen vor:
+   - **Datenquelle**: Auswahl seiner hochgeladenen Tabelle aus dem Sidebar-Dropdown
+   - **Algorithmus-Auswahl**: Wahl eines geeigneten Verfahrens (z.B. Random Forest für Regression oder Richtungsklassifikation)
+   - **Feature-Selektion**: Über die Vorschau-Funktion prüft er die verfügbaren Features und wählt relevante Variablen für das Training aus
+   - **Train/Test-Split**: Festlegung der Aufteilungsverhältnisse (z.B. 80% Training, 20% Test)
+   - **Weitere Hyperparameter**: Anpassung algorithmus-spezifischer Parameter über die bereitgestellten Widgets
+
+4. **Modelltraining**: Durch Betätigung des "Train Model"-Buttons startet er den Trainingsprozess. Eine Progress-Bar visualisiert den Fortschritt.
+
+5. **Evaluationsmetriken**: Nach Abschluss des Trainings präsentiert die Plattform die erreichten Performance-Metriken:
+   - Bei Regression: MSE, RMSE, MAE, R²-Score
+   - Bei Klassifikation: Accuracy, Precision, Recall, F1-Score
+   
+   Zusätzlich werden Visualisierungen wie Prediction vs. Actual-Plots oder Confusion Matrices angezeigt.
+
+6. **Modell-Persistierung**: Der Nutzer wechselt zum "Saved Models"-Tab, wo sein trainiertes Modell aufgelistet wird. Er kann es herunterladen, um es außerhalb der Plattform weiterzuverwenden oder für spätere Analysen zu archivieren.
+
+### 5.9.7 LLM-gestützte Finanzanalyse
+
+Um die quantitativen ML-Ergebnisse durch qualitative Einschätzungen zu ergänzen, nutzt der Nutzer die LLM-Funktionalität:
+
+1. **Navigation**: Er wechselt zur **LLM Playground-Seite**.
+
+2. **Datenauswahl**: In der Sidebar selektiert er die Datentabelle, die als Kontext für die LLM-Analyse dienen soll (z.B. seine hochgeladenen Daten oder die Apple-Kursdaten).
+
+3. **Prompt-Customization**: Der Nutzer erweitert den Standard-Prompt um spezifische Aspekte:
+   ```
+   Analysiere die vorliegenden Finanzdaten unter Berücksichtigung 
+   aktueller geopolitischer Spannungen und regulatorischer 
+   Entwicklungen im Technologiesektor.
+   ```
+
+4. **Konfiguration der LLM-Parameter**:
+   - **Analyse-Modus**: Auswahl zwischen verschiedenen Verfahren (z.B. Sentiment-Analyse, Trendprognose, Risk Assessment)
+   - **Datenmenge**: Festlegung, wie viele Zeilen der Datentabelle dem Modell als Kontext übergeben werden (Trade-off zwischen Kontextfenster-Größe und Detailgrad)
+
+5. **Prompt-Generierung und Überprüfung**: Die Plattform assembliert den finalen Prompt aus Systemanweisungen, Nutzereingaben und strukturierten Daten. Der Nutzer überprüft den vollständigen Prompt in der Vorschau-Ansicht.
+
+6. **LLM-Inferenz**: Nach Bestätigung sendet die Plattform den Prompt an die Ollama-Instanz. Die generierte Analyse wird schrittweise angezeigt (Streaming) oder als vollständige Response präsentiert.
+
+7. **Interpretation**: Der Nutzer studiert die LLM-generierte Analyse, die qualitative Einschätzungen, potenzielle Risikofaktoren und kontextuelle Überlegungen enthält, die durch rein quantitative Methoden nicht erfasst werden.
+
+### 5.9.8 Interaktive Hilfestellung durch den Assistenten
+
+Während der Arbeit mit der Machine Learning-Seite stellt der Nutzer fest, dass er die Bedeutung der "Zeitreihenanalyse"-Option nicht vollständig versteht:
+
+1. **Navigation zur Assistenten-Seite**: Er wechselt zur **Assistant-Seite**, um Unterstützung zu erhalten.
+
+2. **Assistenten-Konfiguration**: Der Nutzer bemerkt, dass er zunächst in den **Settings** unter "Assistant Settings" die korrekte Source-Konfiguration (Ollama-Verbindung) einstellen muss, falls dies noch nicht geschehen ist.
+
+3. **Frage-Formulierung**: Im Chat-Interface gibt er seine Frage ein:
+   ```
+   Was bedeutet die Zeitreihenanalyse-Einstellung auf der Machine 
+   Learning-Seite und wann sollte ich diese verwenden?
+   ```
+
+4. **Assistenten-Response**: Das LLM generiert eine kontextbezogene Erklärung:
+   - Definition von Zeitreihenanalyse
+   - Unterschied zu Cross-Sectional-Analysen
+   - Relevanz für Finanzdaten (Autokorrelation, Trends)
+   - Empfehlung zur korrekten Train/Test-Split-Strategie bei Zeitreihendaten
+   - Hinweis auf Data-Leakage-Problematik
+
+5. **Anwendung des Wissens**: Mit diesem neu erworbenen Verständnis kehrt der Nutzer zur ML-Seite zurück und kann nun fundierte Entscheidungen bezüglich der Zeitreihen-Einstellungen treffen.
+
+### 5.9.9 Zusammenfassung und Erkenntnisgewinn
+
+Durch diesen vollständigen Workflow hat der Nutzer:
+
+- **Datengrundlage geschaffen**: Relevante Finanzdaten erfolgreich beschafft und strukturiert gespeichert
+- **Explorative Analyse durchgeführt**: Fundamentale Kennzahlen und historische Kursentwicklungen untersucht
+- **Vergleichende Bewertung vorgenommen**: Apple's Performance im Kontext von Microsoft evaluiert
+- **Quantitative Modellierung angewandt**: Eigene Daten mittels ML-Algorithmen analysiert und Performance-Metriken erhalten
+- **Qualitative Einschätzung integriert**: LLM-basierte Analyse für kontextuelle und narrative Insights genutzt
+- **Methodenvergleich realisiert**: Unterschiede und Komplementarität zwischen ML- und LLM-Ansätzen erfahren
+- **Selbstständige Problemlösung**: Unklarheiten durch den integrierten Assistenten geklärt
+
+Die Plattform hat damit ihr Hauptziel erreicht: Sie ermöglicht Nutzern ohne tiefgreifende technische Vorkenntnisse eine strukturierte, methodisch fundierte Aktienanalyse unter Verwendung moderner Data Science- und KI-Technologien.
 
 # 6. Diskussion
 
