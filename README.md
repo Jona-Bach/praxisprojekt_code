@@ -148,7 +148,7 @@
     - [6.2.5 Usability und Fehleranfälligkeit](#625-usability-und-fehleranfälligkeit)
     - [6.2.6 Zusammenfassung der Threats to Validity](#626-zusammenfassung-der-threats-to-validity)
   - [6.3 Ausblick und Verbesserungspotenziale](#63-ausblick-und-verbesserungspotenziale)
-  - [6.4 Fazit der Diskussion](#64-fazit-der-diskussion)
+- [7 Fazit der Diskussion und Abschluss](#64-fazit-der-diskussion-und-abschluss)
 
 - [Literatur](#literatur)
 
@@ -3357,7 +3357,7 @@ Diese Roadmap verdeutlicht, dass die Anwendung ein solides Fundament bietet, das
 
 ---
 
-## 6.4 Fazit der Diskussion und Zusammenfassung
+# 7 Fazit der Diskussion und Abschluss
 
 Das Praxisprojekt „FinSight" erreicht seine Kernziele als experimentelle Plattform für Finanzanalyse, Machine Learning und LLM-Integration. Die Anwendung demonstriert erfolgreich die Integration heterogener Technologien in einem kohärenten Dashboard-Konzept und bietet sowohl Einsteigern als auch fortgeschrittenen Nutzern einen funktionalen Werkzeugkasten.
 
