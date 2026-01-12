@@ -2382,9 +2382,6 @@ Diese Flexibilität ermöglicht:
 
 **📊 Data Source:**
 
-![LLM Sidebar - Data Source](rdme_assets/llm_sidebar.png)
-*Abbildung 5-12: Datenquellen-Auswahl im LLM Playground*
-
 Identisch zur ML-Seite:
 - Dropdown "Data source" mit denselben Optionen (Price History, Single Stock, Alphavantage, User Tables)
 - Zusätzliche Parameter abhängig von Auswahl (Symbol, Tabellenname)
