@@ -21,7 +21,7 @@ from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
 import joblib
 
-# __________________________ Configuration __________________________
+# __________________________ Konfiguration __________________________
 
 MODEL_DIR = "saved_models"
 os.makedirs(MODEL_DIR, exist_ok=True)
@@ -34,7 +34,7 @@ ALPHAVANTAGE_TABLES = [
 ALPHA_PRICING_TABLE = "alphavantage_pricing_processed"
 ALPHA_KPI_TABLE = "alphavantage_processed_kpi"
 
-# Training limits
+# Trainings-Grenzen
 
 max_rows_config = get_config_dict("ml_max_rows_for_model")
 if max_rows_config is not None:
@@ -46,7 +46,7 @@ min_rows_config = get_config_dict("ml_min_rows_for_model")
 if min_rows_config is not None:
     MIN_ROWS_FOR_MODEL = int(min_rows_config["Value"])
 else:
-    MIN_ROWS_FOR_MODEL = 50  # Minimum rows for meaningful training
+    MIN_ROWS_FOR_MODEL = 50  # Minimum an Zeilen für sinnvolles Training
 
 # __________________________Header____________________________
 
@@ -57,27 +57,27 @@ st.set_page_config(
 )
 
 
-# ---------------------- Helper Functions ----------------------
+# ---------------------- Helper-Funktionen ----------------------
 
 def _try_parse_numeric_series(s: pd.Series) -> pd.Series | None:
     """
-    Attempts to robustly convert a string series to floats.
-    Supports e.g.:
+    Versucht, eine String-Serie robust in floats umzuwandeln.
+    Unterstützt z.B.:
       - "1.234,56"  -> 1234.56
       - "12,3%"     -> 12.3
       - "  100 "    -> 100.0
-    Returns a series if >=50% of values are plausibly numeric, otherwise None.
+    Gibt eine Serie zurück, wenn >=50% der Werte plausibel numerisch sind, sonst None.
     """
     s = s.astype(str).str.strip()
-    # Empty or placeholder as NaN
+    # Leere oder Platzhalter als NaN
     s = s.replace({"": np.nan, "-": np.nan, "NA": np.nan, "NaN": np.nan})
 
-    # If hardly any digits occur, the column is probably categorical
+    # Wenn kaum Ziffern vorkommen, ist die Spalte wahrscheinlich kategorial
     frac_digit = s.str.contains(r"\d", regex=True).mean()
     if frac_digit < 0.5:
         return None
 
-    # Remove percent / currency symbols / spaces
+    # Prozent / Währungszeichen / Leerzeichen entfernen
     s_clean = (
         s.str.replace("%", "", regex=False)
          .str.replace("€", "", regex=False)
@@ -85,10 +85,10 @@ def _try_parse_numeric_series(s: pd.Series) -> pd.Series | None:
          .str.replace(" ", "", regex=False)
     )
 
-    # Variant 1: Standard conversion (dot as decimal separator)
+    # Variante 1: Standard-Konvertierung (Punkt als Dezimaltrenner)
     cand1 = pd.to_numeric(s_clean, errors="coerce")
 
-    # Variant 2: German notation: 1.234,56 -> 1234.56
+    # Variante 2: Deutsche Schreibweise: 1.234,56 -> 1234.56
     s_de = s_clean.str.replace(".", "", regex=False).str.replace(",", ".", regex=False)
     cand2 = pd.to_numeric(s_de, errors="coerce")
 
@@ -104,29 +104,29 @@ def _try_parse_numeric_series(s: pd.Series) -> pd.Series | None:
 
 def auto_convert_numeric_and_datetime(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Runs once through all columns and:
-    - converts string columns that look like numbers to float
-    - converts typical date/time columns to datetime
+    Läuft einmal über alle Spalten und:
+    - konvertiert String-Spalten, die nach Zahlen aussehen, in float
+    - konvertiert typische Datums-/Zeitspalten in datetime
     """
     df = df.copy()
 
     for col in df.columns:
         col_series = df[col]
 
-        # Numeric or already datetime → do nothing
+        # Numerisch oder bereits datetime → nichts tun
         if pd.api.types.is_numeric_dtype(col_series) or np.issubdtype(col_series.dtype, np.datetime64):
             continue
 
         col_lower = col.lower()
 
-        # Detect potential time/date columns
+        # Potenzielle Zeit-/Datums-Spalten erkennen
         if any(k in col_lower for k in ["date", "time", "timestamp"]):
             dt = pd.to_datetime(col_series, errors="coerce")
             if dt.notna().mean() > 0.5:
                 df[col] = dt
-                continue  # already recognized as date
+                continue  # schon als Datum erkannt
 
-        # Attempt: convert string column to float
+        # Versuch: String-Spalte in Float umwandeln
         parsed = _try_parse_numeric_series(col_series)
         if parsed is not None:
             df[col] = parsed
@@ -141,8 +141,8 @@ def load_data_from_source(
     table_name: str = None,
 ):
     """
-    Loads data depending on selected source using your existing functions
-    and then converts string columns to numeric / date types as best as possible.
+    Lädt Daten je nach ausgewählter Quelle mit deinen bestehenden Funktionen
+    und konvertiert anschließend String-Spalten bestmöglich in numerische / Datums-Typen.
     """
     if source == "Entire Yahoo Finance Pricing Table":
         df = get_all_yf_price_history()
@@ -192,7 +192,7 @@ def load_data_from_source(
     else:
         df = pd.DataFrame()
 
-    # automatic conversion from string → float / datetime
+    # automatische Konvertierung von String → float / datetime
     if df is not None and not df.empty:
         df = auto_convert_numeric_and_datetime(df)
 
@@ -201,28 +201,28 @@ def load_data_from_source(
 
 def detect_time_column(df: pd.DataFrame):
     """
-    Attempts to automatically identify the time column.
-    Priority:
-    1. Column named 'date'
-    2. Columns with datetime64 dtype
-    3. Column names containing 'date', 'time', 'timestamp' or 'jahr'
+    Versucht automatisch die Zeitspalte zu identifizieren.
+    Priorität:
+    1. Spalte mit Namen 'date'
+    2. Spalten mit datetime64 dtype
+    3. Spaltennamen, die 'date', 'time', 'timestamp' oder 'jahr' enthalten
     """
     cols = df.columns.tolist()
 
-    # 1. explicitly "date"
+    # 1. explizit "date"
     if "date" in cols:
         return "date"
 
-    # 2. real datetime columns
+    # 2. echte Datetime-Spalten
     datetime_cols = [c for c in cols if np.issubdtype(df[c].dtype, np.datetime64)]
     if datetime_cols:
         return datetime_cols[0]
 
-    # 3. heuristically by name
+    # 3. heuristisch nach Namen
     keywords = ["date", "time", "timestamp", "jahr"]
     for c in cols:
         if any(k in c.lower() for k in keywords):
-            # Try to cast this column to datetime
+            # Versuch, diese Spalte in datetime zu casten
             try:
                 converted = pd.to_datetime(df[c], errors="coerce")
                 if converted.notna().mean() > 0.5:
@@ -236,8 +236,8 @@ def detect_time_column(df: pd.DataFrame):
 
 def make_future_target(df: pd.DataFrame, time_col: str, target_col: str, horizon_label: str):
     """
-    Creates a future target based on a time column.
-    y_future(t) = y(t + delta) is mapped to the row with timestamp t.
+    Erzeugt ein zukünftiges Target auf Basis einer Zeitspalte.
+    y_future(t) = y(t + delta) wird auf die Zeile mit Zeitpunkt t gemappt.
     """
     df = df.copy()
     if not np.issubdtype(df[time_col].dtype, np.datetime64):
@@ -245,20 +245,20 @@ def make_future_target(df: pd.DataFrame, time_col: str, target_col: str, horizon
 
     df = df.sort_values(time_col)
 
-    if horizon_label == "1 Day":
+    if horizon_label == "1 Tag":
         delta = pd.DateOffset(days=1)
         suffix = "1d"
-    elif horizon_label == "3 Weeks":
+    elif horizon_label == "3 Wochen":
         delta = pd.DateOffset(weeks=3)
         suffix = "3w"
-    elif horizon_label == "3 Months":
+    elif horizon_label == "3 Monate":
         delta = pd.DateOffset(months=3)
         suffix = "3m"
-    elif horizon_label == "1 Year":
+    elif horizon_label == "1 Jahr":
         delta = pd.DateOffset(years=1)
         suffix = "1y"
     else:
-        # No shift → no changes
+        # Kein Shift → nichts verändern
         return df, target_col
 
     future_col = f"{target_col}_future_{suffix}"
@@ -275,17 +275,17 @@ def make_future_target(df: pd.DataFrame, time_col: str, target_col: str, horizon
 
 def make_lag_features(df: pd.DataFrame, time_col: str, base_col: str, n_lags: int):
     """
-    Creates lag features from a base column.
-    Example: base_col = 'close', n_lags = 3
+    Erzeugt Lag-Features aus einer Basis-Spalte.
+    Beispiel: base_col = 'close', n_lags = 3
     → close_lag_1, close_lag_2, close_lag_3
     """
     df = df.copy()
 
     if time_col not in df.columns:
-        raise ValueError(f"Time column '{time_col}' not found in DataFrame.")
+        raise ValueError(f"Zeitspalte '{time_col}' nicht im DataFrame gefunden.")
 
     if base_col not in df.columns:
-        raise ValueError(f"Base column '{base_col}' not found in DataFrame.")
+        raise ValueError(f"Basis-Spalte '{base_col}' nicht im DataFrame gefunden.")
 
     if not np.issubdtype(df[time_col].dtype, np.datetime64):
         df[time_col] = pd.to_datetime(df[time_col])
@@ -305,22 +305,22 @@ def make_lag_features(df: pd.DataFrame, time_col: str, base_col: str, n_lags: in
 
 def preprocess_features_target_regression(df: pd.DataFrame, feature_cols, target_col, scale: bool):
     """
-    Preprocessing for regression:
+    Preprocessing für Regression:
     - Target -> float
-    - numeric feature columns (also string -> float)
-    - One-hot encoding for real categoricals
-    - optional scaling
+    - numerische Feature-Spalten (auch String -> float)
+    - One-Hot-Encoding für echte Kategoricals
+    - optionales Scaling
     """
     df = df.copy()
 
     if target_col not in df.columns:
-        raise ValueError(f"Target column '{target_col}' not found in DataFrame.")
+        raise ValueError(f"Target-Spalte '{target_col}' nicht im DataFrame gefunden.")
 
     df[target_col] = pd.to_numeric(df[target_col], errors="coerce")
 
     missing_features = [c for c in feature_cols if c not in df.columns]
     if missing_features:
-        raise ValueError(f"The following feature columns are missing in the DataFrame: {missing_features}")
+        raise ValueError(f"Folgende Feature-Spalten fehlen im DataFrame: {missing_features}")
 
     X_raw = df[feature_cols].copy()
 
@@ -332,7 +332,7 @@ def preprocess_features_target_regression(df: pd.DataFrame, feature_cols, target
         if pd.api.types.is_numeric_dtype(s):
             numeric_feature_cols.append(col)
         else:
-            # Try to convert afterwards (if strings are still remaining)
+            # Versuch, nachträglich zu konvertieren (falls noch Strings übrig sind)
             converted = _try_parse_numeric_series(s)
             if converted is not None:
                 X_raw[col] = converted
@@ -353,7 +353,7 @@ def preprocess_features_target_regression(df: pd.DataFrame, feature_cols, target
     data = pd.concat([X_full, df[target_col]], axis=1)
     data = data.dropna()
     if data.empty:
-        raise ValueError("After cleaning (removing NaNs), no data rows remain.")
+        raise ValueError("Nach dem Bereinigen (NaNs entfernen) sind keine Datenzeilen mehr übrig.")
 
     y_clean = data[target_col]
     X_clean = data.drop(columns=[target_col])
@@ -370,18 +370,18 @@ def preprocess_features_target_regression(df: pd.DataFrame, feature_cols, target
 
 def preprocess_features_target_classification(df: pd.DataFrame, feature_cols, target_col, scale: bool):
     """
-    Preprocessing for classification (Logistic Regression):
-    - Target as classes (LabelEncoder)
-    - Features analogous to regression (numeric/categorical)
+    Preprocessing für Klassifikation (Logistische Regression):
+    - Target als Klassen (LabelEncoder)
+    - Features analog wie bei Regression (numerisch/kategorial)
     """
     df = df.copy()
 
     if target_col not in df.columns:
-        raise ValueError(f"Target column '{target_col}' not found in DataFrame.")
+        raise ValueError(f"Target-Spalte '{target_col}' nicht im DataFrame gefunden.")
 
     missing_features = [c for c in feature_cols if c not in df.columns]
     if missing_features:
-        raise ValueError(f"The following feature columns are missing in the DataFrame: {missing_features}")
+        raise ValueError(f"Folgende Feature-Spalten fehlen im DataFrame: {missing_features}")
 
     X_raw = df[feature_cols].copy()
 
@@ -414,7 +414,7 @@ def preprocess_features_target_classification(df: pd.DataFrame, feature_cols, ta
     data = pd.concat([X_full, y_raw.rename(target_col)], axis=1)
     data = data.dropna()
     if data.empty:
-        raise ValueError("After cleaning (removing NaNs), no data rows remain.")
+        raise ValueError("Nach dem Bereinigen (NaNs entfernen) sind keine Datenzeilen mehr übrig.")
 
     y_labels = data[target_col].astype(str)
     label_encoder = LabelEncoder()
@@ -448,8 +448,8 @@ def save_model_bundle(
     feature_dtypes: dict | None = None,
 ):
     """
-    Saves model + metadata as .pkl in MODEL_DIR.
-    encoded_feature_names: column names after one-hot encoding / dummies etc.
+    Speichert Modell + Metadaten als .pkl in MODEL_DIR.
+    encoded_feature_names: Spaltennamen nach One-Hot-Encoding / Dummys etc.
     """
     ts_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     safe_algo = algo_name.replace(" ", "")
@@ -489,23 +489,23 @@ def build_X_for_prediction(
     time_col: str | None = None,
 ):
     """
-    Builds a feature DataFrame X for predictions based on the saved bundle.
-    - uses make_lag_features in time series mode
-    - reconstructs numeric / categorical columns
-    - aligns with encoded_feature_names (columns after training)
+    Baut ein Feature-DataFrame X für Vorhersagen auf Basis des gespeicherten Bundles.
+    - nutzt bei Zeitreihenmodus make_lag_features
+    - rekonstruiert numerische / kategoriale Spalten
+    - richtet sich nach encoded_feature_names (Spalten nach Training)
     """
     df_proc = df.copy()
 
-    # Rebuild time series lags
+    # Zeitreihen-Lags nachbauen
     if time_series_mode:
         if time_col is None or lag_base_col is None or n_lags is None:
-            raise ValueError("Time series model requires time column, lag base column and number of lags.")
+            raise ValueError("Zeitreihenmodell benötigt Zeitspalte, Lag-Basis-Spalte und Anzahl der Lags.")
         df_proc, lag_cols = make_lag_features(df_proc, time_col, lag_base_col, n_lags)
         feature_cols = lag_cols
 
     missing = [c for c in feature_cols if c not in df_proc.columns]
     if missing:
-        raise ValueError(f"The following feature columns are missing in the data: {missing}")
+        raise ValueError(f"Folgende Feature-Spalten fehlen in den Daten: {missing}")
 
     X_raw = df_proc[feature_cols].copy()
 
@@ -534,14 +534,14 @@ def build_X_for_prediction(
 
     X_full = pd.concat([X_num, X_cat_dummies], axis=1)
 
-    # Align columns to encoded_feature_names from training
+    # Spalten an encoded_feature_names aus dem Training ausrichten
     if encoded_feature_names is not None:
         for col in encoded_feature_names:
             if col not in X_full.columns:
                 X_full[col] = 0.0
         X_full = X_full[encoded_feature_names]
 
-    # Remove NaNs
+    # NaNs entfernen
     X_full = X_full.dropna()
     df_proc = df_proc.loc[X_full.index]
 
@@ -566,8 +566,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("🧠 ML Studio")
-st.text("Quickly build your own models based on your financial & user data. Select algorithm, data source, features & target – the ML Studio takes care of the rest.")
+st.title("🧠 ML-Studio")
+st.text("Baue schnell eigene Modelle auf Basis deiner Finanz- & User-Daten. Wähle Algorithmus, Datenquelle, Features & Target – das ML Studio übernimmt den Rest.")
 
 st.divider()
 
@@ -603,14 +603,14 @@ with st.sidebar:
     table_name = None
 
     if data_source == "Yahoo Finance Pricing Single Stock":
-        symbol = st.text_input("Symbol (e.g. AAPL, MSFT)", value="AAPL")
+        symbol = st.text_input("Symbol (z.B. AAPL, MSFT)", value="AAPL")
 
     elif data_source == "No Table selected":
         st.info("Choose Table")
 
     elif data_source == "Alphavantage":
         table_name = st.selectbox(
-            "Alphavantage Table",
+            "Alphavantage-Tabelle",
             ALPHAVANTAGE_TABLES
         )
 
@@ -635,11 +635,11 @@ with st.sidebar:
     scale_features = st.checkbox(
         "Scale features (StandardScaler)",
         value=True,
-        help="Recommended for linear and logistic regression",
+        help="Recommended for linear and logistic Regression",
     )
 
     use_time_series = st.checkbox(
-        "Time Series Mode (Lag features from target)",
+        "Time Series Mode (Lag-Features from target)",
         value=False,
         help="Automatically generates lag features of the target column (e.g., close_lag_1 … close_lag_n) and uses them as input for the model.",
     )
@@ -666,7 +666,7 @@ tab1, tab2 = st.tabs(["🔬 ML Studio", "📁 Saved Models"])
 # --------------------------- TAB 1: Training ---------------------------
 
 with tab1:
-    # ---------------------- Load data & column selection ----------------------
+    # ---------------------- Daten laden & Spaltenwahl ----------------------
     with st.spinner("Loading..."):
         df = load_data_from_source(data_source, symbol=symbol, table_name=table_name)
 
@@ -675,7 +675,7 @@ with tab1:
     else:
         st.subheader("📊 Data Overview")
 
-        # Small metrics at the top
+        # kleine Kennzahlen oben
         c1, c2, c3 = st.columns(3)
         with c1:
             st.metric("Rows", len(df))
@@ -698,26 +698,26 @@ with tab1:
         numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
         all_cols = df.columns.tolist()
 
-        st.markdown("#### 🔧 Feature & Target Selection")
+        st.markdown("#### 🔧 Feature & target Selection")
 
         col1, col2 = st.columns([2, 1])
 
         with col1:
             feature_cols = st.multiselect(
-                "Feature Columns (X)",
+                "Feature-Columns (X)",
                 options=all_cols,
                 default=[c for c in numeric_cols if c != "target"][:5],
             )
 
         with col2:
             target_col = st.selectbox(
-                "Target Column (y)",
+                "Target-Spalte (y)",
                 options=all_cols,
             )
 
-        # ---------------- Future Target Settings ----------------
+        # ---------------- Zukunfts-Target Einstellungen ----------------
 
-        st.markdown("#### ⏩ Forecasting Horizon (Future Target)")
+        st.markdown("#### ⏩ Forecasting Horizon (Future-Target)")
 
         auto_time_col = detect_time_column(df)
 
@@ -727,84 +727,84 @@ with tab1:
             horizon_label = "No Shift (current target)"
         else:
             time_col = st.selectbox(
-                "Time Column for future target",
+                "Time-Column for future target",
                 options=[auto_time_col] + [c for c in all_cols if c != auto_time_col],
                 index=0,
                 help="Automatically detected time column used to shift the target into the future.",
             )
             horizon_label = st.selectbox(
-                "Prediction Horizon",
+                "Vorhersagehorizont",
                 [
-                    "No Shift (current target)",
-                    "1 Day",
-                    "3 Weeks",
-                    "3 Months",
-                    "1 Year",
+                    "Kein Shift (aktuelles Target)",
+                    "1 Tag",
+                    "3 Wochen",
+                    "3 Monate",
+                    "1 Jahr",
                 ],
                 index=0,
             )
 
-        # Note on possible leakage (only critical for regression)
-        if (algo not in ["Classification (Logistic Regression)", "Directional Classification (LogReg, Up/Down)"]
+        # Hinweis bei möglichem Leakage (nur für Regression kritisch)
+        if (algo not in ["Klassifikation (Logistische Regression)", "Richtungsklassifikation (LogReg, Up/Down)"]
                 and target_col in feature_cols
-                and horizon_label == "No Shift (current target)"
+                and horizon_label == "Kein Shift (aktuelles Target)"
                 and not use_time_series):
             st.warning(
-                "Note: The target column is also selected as a feature **without** time horizon shift. "
-                "This can lead to data leakage. With time shift or time series mode, this is usually not critical."
+                "Hinweis: Die Target-Spalte ist auch als Feature ausgewählt **ohne** Zeithorizont-Shift. "
+                "Das kann zu Data Leakage führen. Mit Zeit-Shift oder Zeitreihenmodus ist das normalerweise unkritisch."
             )
 
         # ---------------------- Training ----------------------
 
         if train_button:
             if not feature_cols and not use_time_series:
-                st.error("Please select at least one feature column (or enable time series mode).")
+                st.error("Bitte wähle mindestens eine Feature-Spalte aus (oder aktiviere den Zeitreihenmodus).")
             elif not target_col:
-                st.error("Please select a target column.")
+                st.error("Bitte wähle eine Target-Spalte aus.")
             else:
                 try:
                     df_for_model = df.copy()
 
-                    # Check minimum number of rows
+                    # Mindestanzahl an Zeilen checken
                     if len(df_for_model) < MIN_ROWS_FOR_MODEL:
                         st.info(
-                            f"The loaded dataset has only {len(df_for_model)} rows. "
-                            f"For a meaningful model, at least {MIN_ROWS_FOR_MODEL} rows are required. "
-                            "Please choose another data source or a longer time period."
+                            f"Das geladene Dataset hat nur {len(df_for_model)} Zeilen. "
+                            f"Für ein sinnvolles Modell werden mindestens {MIN_ROWS_FOR_MODEL} Zeilen benötigt. "
+                            "Bitte wähle eine andere Datenquelle oder einen längeren Zeitraum."
                         )
                         st.stop()
 
-                    # Row limit to prevent RAM explosion
+                    # Zeilenlimit, damit RAM nicht explodiert
                     if len(df_for_model) > MAX_ROWS_FOR_MODEL:
                         st.warning(
-                            f"Dataset has {len(df_for_model)} rows – only the first {MAX_ROWS_FOR_MODEL} "
-                            f"rows will be used for training."
+                            f"Dataset hat {len(df_for_model)} Zeilen – es werden nur die ersten {MAX_ROWS_FOR_MODEL} "
+                            f"Zeilen zum Training verwendet."
                         )
                         df_for_model = df_for_model.head(MAX_ROWS_FOR_MODEL)
 
                     with st.spinner("Training in Progress..."):
-                        # 1) Create future target (if desired)
-                        if horizon_label != "No Shift (current target)":
+                        # 1) Zukunfts-Target erzeugen (falls gewünscht)
+                        if horizon_label != "Kein Shift (aktuelles Target)":
                             if time_col is None:
-                                st.error("No valid time column was detected. Target shifting is not possible.")
+                                st.error("Es wurde keine gültige Zeitspalte erkannt. Shift des Targets ist nicht möglich.")
                                 st.stop()
                             df_for_model, effective_target_col = make_future_target(
                                 df_for_model, time_col, target_col, horizon_label
                             )
                             st.info(
-                                f"Future target created: '{effective_target_col}' based on '{target_col}' "
-                                f"with horizon '{horizon_label}'."
+                                f"Zukunfts-Target erzeugt: '{effective_target_col}' basiert auf '{target_col}' "
+                                f"mit Horizont '{horizon_label}'."
                             )
                         else:
                             effective_target_col = target_col
 
-                        # 1a) Directional classification: build binary target (Up/Down)
-                        is_directional_cls = (algo == "Directional Classification (LogReg, Up/Down)")
+                        # 1a) Richtungsklassifikation: binary Target bauen (Up/Down)
+                        is_directional_cls = (algo == "Richtungsklassifikation (LogReg, Up/Down)")
                         if is_directional_cls:
                             if effective_target_col == target_col:
                                 st.error(
-                                    "Directional classification requires a prediction horizon "
-                                    "(e.g. 1 Day, 3 Weeks, 3 Months)."
+                                    "Richtungsklassifikation benötigt einen Vorhersagehorizont "
+                                    "(z.B. 1 Tag, 3 Wochen, 3 Monate)."
                                 )
                                 st.stop()
 
@@ -814,16 +814,16 @@ with tab1:
                             effective_target_col = "direction_up"
 
                             st.info(
-                                "Directional classification active: "
-                                "Target = 1 if future price > current price, else 0."
+                                "Richtungsklassifikation aktiv: "
+                                "Target = 1, wenn Future-Preis > aktueller Preis, sonst 0."
                             )
 
-                        # 2) Time series mode: build lag features from target
+                        # 2) Zeitreihenmodus: Lag-Features aus Target bauen
                         active_feature_cols = feature_cols.copy()
 
                         if use_time_series:
                             if time_col is None:
-                                st.error("Time series mode requires a valid time column.")
+                                st.error("Zeitreihenmodus benötigt eine gültige Zeitspalte.")
                                 st.stop()
 
                             df_for_model, lag_cols = make_lag_features(
@@ -835,17 +835,17 @@ with tab1:
                             active_feature_cols = lag_cols
 
                             st.info(
-                                f"Time series mode active: Using lag features {lag_cols[:3]} ... "
-                                f"(total {len(lag_cols)}) as input."
+                                f"Zeitreihenmodus aktiv: Verwende die Lag-Features {lag_cols[:3]} ... "
+                                f"(insgesamt {len(lag_cols)}) als Input."
                             )
 
-                        # Classification vs. Regression
+                        # Klassifikation vs. Regression
                         is_classification = algo in [
-                            "Classification (Logistic Regression)",
-                            "Directional Classification (LogReg, Up/Down)",
+                            "Klassifikation (Logistische Regression)",
+                            "Richtungsklassifikation (LogReg, Up/Down)",
                         ]
 
-                     # Preprocessing
+                        # Preprocessing
                         if is_classification:
                             X_used, y, X_encoded, scaler, label_encoder = preprocess_features_target_classification(
                                 df_for_model,
@@ -866,8 +866,8 @@ with tab1:
 
                         if X_used.shape[0] < 5:
                             st.warning(
-                                f"Only {X_used.shape[0]} rows left after preprocessing – "
-                                f"that's very little for training."
+                                f"Nur {X_used.shape[0]} Zeilen nach Preprocessing übrig – "
+                                f"das ist sehr wenig zum Trainieren."
                             )
 
                         X_train, X_test, y_train, y_test = train_test_split(
@@ -878,9 +878,9 @@ with tab1:
                             shuffle=not use_time_series,
                         )
 
-                        st.success(f"Training data prepared: X_train={X_train.shape}, X_test={X_test.shape}")
+                        st.success(f"Trainingsdaten vorbereitet: X_train={X_train.shape}, X_test={X_test.shape}")
 
-                        # ---------------------- Model Training ----------------------
+                        # ---------------------- Modelltraining ----------------------
 
                         if is_classification:
                             model = LogisticRegression(max_iter=1000)
@@ -888,24 +888,24 @@ with tab1:
                             y_pred = model.predict(X_test)
 
                             if is_directional_cls:
-                                st.markdown("### 🎯 Results – Direction Classification (Up/Down)")
-                                algo_name_for_save = "Direction Classification (LogReg)"
+                                st.markdown("### 🎯 Ergebnisse – Richtungsklassifikation (Up/Down)")
+                                algo_name_for_save = "Richtungsklassifikation (LogReg)"
                             else:
-                                st.markdown("### 🎯 Results – Classification (Logistic Regression)")
-                                algo_name_for_save = "Logistic Regression (Classification)"
+                                st.markdown("### 🎯 Ergebnisse – Klassifikation (Logistische Regression)")
+                                algo_name_for_save = "Logistische Regression (Klassifikation)"
 
                             acc = accuracy_score(y_test, y_pred)
                             st.metric("Accuracy", f"{acc:.4f}")
 
                             fig, ax = plt.subplots()
                             ConfusionMatrixDisplay.from_predictions(y_test, y_pred, ax=ax)
-                            ax.set_title("Confusion Matrix")
+                            ax.set_title("Konfusionsmatrix")
                             st.pyplot(fig)
 
                         else:
                             if algo == "Lineare Regression":
                                 model = LinearRegression()
-                                algo_name_for_save = "Linear Regression"
+                                algo_name_for_save = "Lineare Regression"
                             elif algo == "Decision Tree":
                                 model = DecisionTreeRegressor(random_state=42)
                                 algo_name_for_save = "Decision Tree (Regression)"
@@ -919,7 +919,7 @@ with tab1:
                             model.fit(X_train, y_train)
                             y_pred = model.predict(X_test)
 
-                            st.markdown(f"### 📈 Results – {algo_name_for_save}")
+                            st.markdown(f"### 📈 Ergebnisse – {algo_name_for_save}")
 
                             mse = mean_squared_error(y_test, y_pred)
                             rmse = np.sqrt(mse)
@@ -934,7 +934,7 @@ with tab1:
                                 pd.DataFrame({"y_true": y_test, "y_pred": y_pred}).reset_index(drop=True)
                             )
 
-                        # ---------------------- Save Model ----------------------
+                        # ---------------------- Modell speichern ----------------------
 
                         feature_dtypes = (
                             df_for_model[active_feature_cols]
@@ -958,71 +958,71 @@ with tab1:
                             feature_dtypes=feature_dtypes,
                         )
 
-                        st.success(f"Model saved at: `{save_path}`")
-                        st.caption("You can load this .pkl file in another tab and use it for new predictions.")
+                        st.success(f"Modell gespeichert unter: `{save_path}`")
+                        st.caption("Du kannst diese .pkl-Datei in einem anderen Tab laden und für neue Vorhersagen nutzen.")
 
                 except Exception as e:
-                    st.error(f"Error during training or evaluation: {e}")
+                    st.error(f"Fehler beim Training oder bei der Auswertung: {e}")
 
 
-# --------------------------- TAB 2: Saved Models ---------------------------
+# --------------------------- TAB 2: Gespeicherte Modelle ---------------------------
 
 with tab2:
-    st.subheader("📁 Saved Models")
+    st.subheader("📁 Gespeicherte Modelle")
 
-    # Collect all .pkl files in MODEL_DIR
+    # Alle .pkl-Dateien im MODEL_DIR einsammeln
     try:
         model_files = sorted(
             [f for f in os.listdir(MODEL_DIR) if f.endswith(".pkl")]
         )
     except FileNotFoundError:
-        st.info("The folder for saved models does not exist yet.")
+        st.info("Der Ordner für gespeicherte Modelle existiert noch nicht.")
         model_files = []
 
     if not model_files:
-        st.info("No models have been saved in `saved_models` yet.")
+        st.info("Es wurden noch keine Modelle in `saved_models` gespeichert.")
     else:
-        # Prepare overview table
+        # Übersichtstabelle vorbereiten
         overview_rows = []
         for fname in model_files:
             path = os.path.join(MODEL_DIR, fname)
             try:
                 bundle = joblib.load(path)
                 overview_rows.append({
-                    "File": fname,
-                    "Algorithm": bundle.get("algo", "-"),
-                    "Data Source": bundle.get("data_source", "-"),
+                    "Datei": fname,
+                    "Algorithmus": bundle.get("algo", "-"),
+                    "Datenquelle": bundle.get("data_source", "-"),
                     "Target": bundle.get("target_col", "-"),
-                    "Horizon": bundle.get("horizon", "-"),
-                    "Time Series Mode": bundle.get("time_series_mode", False),
+                    "Horizont": bundle.get("horizon", "-"),
+                    "Zeitreihenmodus": bundle.get("time_series_mode", False),
                     "Lags": bundle.get("n_lags", None),
-                    "Lag Base": bundle.get("lag_base_col", None),
-                    "Number of Features": len(bundle.get("feature_cols", []) or []),
-                    "Saved at": bundle.get("saved_at", "-"),
+                    "Lag-Basis": bundle.get("lag_base_col", None),
+                    "Anzahl Features": len(bundle.get("feature_cols", []) or []),
+                    "Gespeichert am": bundle.get("saved_at", "-"),
                 })
             except Exception as e:
                 overview_rows.append({
-                    "File": fname,
-                    "Algorithm": f"⚠️ Error loading: {e}",
-                    "Data Source": "-",
+                    "Datei": fname,
+                    "Algorithmus": f"⚠️ Fehler beim Laden: {e}",
+                    "Datenquelle": "-",
                     "Target": "-",
-                    "Horizon": "-",
-                    "Time Series Mode": "-",
+                    "Horizont": "-",
+                    "Zeitreihenmodus": "-",
                     "Lags": "-",
-                    "Lag Base": "-",
-                    "Number of Features": "-",
-                    "Saved at": "-",
+                    "Lag-Basis": "-",
+                    "Anzahl Features": "-",
+                    "Gespeichert am": "-",
                 })
 
-        st.markdown("### 🔎 Model Overview")
+        st.markdown("### 🔎 Modell-Übersicht")
         overview_df = pd.DataFrame(overview_rows)
         st.dataframe(overview_df, width="stretch")
 
-        # Detail view for a selected model
-        st.markdown("### 🧬 Model Selection")
+        # Detailansicht für ein ausgewähltes Modell
+        st.markdown("### 🧬 Modellauswahl")
 
         selected_file = st.selectbox(
-            "Select model",
+            "Modell auswählen",
             model_files,
             index=0,
         )
@@ -1033,77 +1033,77 @@ with tab2:
             try:
                 bundle = joblib.load(path)
             except Exception as e:
-                st.error(f"Model bundle could not be loaded: {e}")
+                st.error(f"Modell-Bundle konnte nicht geladen werden: {e}")
             else:
                 col_meta, col_dl = st.columns([3, 1])
 
                 with col_meta:
-                    st.markdown(f"#### Details for `{selected_file}`")
+                    st.markdown(f"#### Details zu `{selected_file}`")
 
-                    st.write("**Algorithm:**", bundle.get("algo", "-"))
-                    st.write("**Data Source:**", bundle.get("data_source", "-"))
-                    st.write("**Target Column:**", bundle.get("target_col", "-"))
-                    st.write("**Prediction Horizon:**", bundle.get("horizon", "-"))
+                    st.write("**Algorithmus:**", bundle.get("algo", "-"))
+                    st.write("**Datenquelle:**", bundle.get("data_source", "-"))
+                    st.write("**Target-Spalte:**", bundle.get("target_col", "-"))
+                    st.write("**Vorhersagehorizont:**", bundle.get("horizon", "-"))
 
-                    st.write("**Time Series Mode:**", "Yes" if bundle.get("time_series_mode") else "No")
+                    st.write("**Zeitreihenmodus:**", "Ja" if bundle.get("time_series_mode") else "Nein")
                     if bundle.get("time_series_mode"):
                         st.write("• Lags:", bundle.get("n_lags"))
-                        st.write("• Lag Base Column:", bundle.get("lag_base_col"))
+                        st.write("• Lag-Basis-Spalte:", bundle.get("lag_base_col"))
 
                     feature_cols_b = bundle.get("feature_cols", []) or []
                     feature_dtypes_b = bundle.get("feature_dtypes", {}) or {}
 
-                    st.write(f"**Features (X) – {len(feature_cols_b)} columns:**")
+                    st.write(f"**Features (X) – {len(feature_cols_b)} Spalten:**")
                     if feature_cols_b:
                         lines = []
                         for col in feature_cols_b:
                             dtype = feature_dtypes_b.get(col, "?")
-                            # "Length": for floats we explicitly state 3 decimal places
+                            # "Länge": für Floats sagen wir explizit 3 Nachkommastellen
                             if isinstance(dtype, str) and ("float" in dtype or "double" in dtype):
-                                lines.append(f"{col}  ({dtype}, 3 decimal places)")
+                                lines.append(f"{col}  ({dtype}, 3 Nachkommastellen)")
                             else:
                                 lines.append(f"{col}  ({dtype})")
                         st.code("\n".join(lines), language="text")
                     else:
-                        st.write("_No feature list found in bundle._")
+                        st.write("_Keine Feature-Liste im Bundle gefunden._")
 
-                    st.write("**Saved at:**", bundle.get("saved_at", "-"))
+                    st.write("**Gespeichert am:**", bundle.get("saved_at", "-"))
 
                 with col_dl:
                     st.markdown("#### Download")
                     try:
                         with open(path, "rb") as f:
                             st.download_button(
-                                label="⬇️ Download model",
+                                label="⬇️ Modell herunterladen",
                                 data=f,
                                 file_name=selected_file,
                                 mime="application/octet-stream",
                             )
                     except Exception as e:
-                        st.warning(f"Download not possible: {e}")
+                        st.warning(f"Download nicht möglich: {e}")
 
                 st.info(
-                    "💡 Note: This model was trained with exactly the feature columns listed above. "
-                    "If you want to use it later for predictions, you must provide the same feature columns "
-                    "in the same structure."
+                    "💡 Hinweis: Dieses Modell wurde mit genau den oben gelisteten Feature-Spalten trainiert. "
+                    "Wenn du es später für Vorhersagen verwenden möchtest, musst du dieselben Feature-Spalten "
+                    "in derselben Struktur wieder bereitstellen."
                 )
 
-                # --- Try out model ---
-                with st.expander("🧪 Try model with current data", expanded=False):
+                # --- Modell ausprobieren ---
+                with st.expander("🧪 Modell mit aktuellen Daten ausprobieren", expanded=False):
                     st.write(
-                        "The currently selected data source, symbol or table in the sidebar will be used. "
-                        "Make sure they are compatible with the training data."
+                        "Es werden die aktuell in der Sidebar gewählte Datenquelle, das Symbol bzw. die Tabelle verwendet. "
+                        "Achte darauf, dass diese mit den Trainingsdaten kompatibel sind."
                     )
 
                     df_pred = load_data_from_source(data_source, symbol=symbol, table_name=table_name)
 
                     if df_pred is None or df_pred.empty:
                         st.info(
-                            "No data loaded from the currently selected data source. "
-                            "Please select an appropriate source in the sidebar."
+                            "Keine Daten aus der aktuell gewählten Datenquelle geladen. "
+                            "Bitte wähle in der Sidebar eine passende Quelle aus."
                         )
                     else:
-                        st.write(f"Current data: **{len(df_pred)} rows**, **{df_pred.shape[1]} columns**.")
+                        st.write(f"Aktuelle Daten: **{len(df_pred)} Zeilen**, **{df_pred.shape[1]} Spalten**.")
 
                         time_col_pred = None
                         if bundle.get("time_series_mode"):
@@ -1116,7 +1116,7 @@ with tab2:
                                 default_index = 0
 
                             time_col_pred = st.selectbox(
-                                "Time column for prediction (for lags)",
+                                "Zeitspalte für Vorhersage (für Lags)",
                                 options=time_options,
                                 index=default_index,
                             )
@@ -1125,13 +1125,13 @@ with tab2:
                         min_rows_pred = 1 if len(df_pred) < 10 else 10
 
                         n_rows_pred = st.slider(
-                            "How many of the last rows to use for prediction?",
+                            "Wie viele der letzten Zeilen für Vorhersage verwenden?",
                             min_value=min_rows_pred,
                             max_value=max_rows_pred,
                             value=max_rows_pred,
                         )
 
-                        if st.button("🔮 Calculate prediction with this model"):
+                        if st.button("🔮 Vorhersage mit diesem Modell berechnen"):
                             try:
                                 df_for_pred = df_pred.tail(n_rows_pred)
 
@@ -1168,8 +1168,8 @@ with tab2:
 
                                 result_df["prediction"] = y_pred_decoded
 
-                                st.markdown("#### Predictions (last rows)")
+                                st.markdown("#### Vorhersagen (letzte Zeilen)")
                                 st.dataframe(result_df.tail(50), width="stretch")
 
                             except Exception as e:
-                                st.error(f"Prediction not possible: {e}")
+                                st.error(f"Vorhersage nicht möglich: {e}")
