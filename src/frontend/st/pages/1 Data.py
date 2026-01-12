@@ -387,28 +387,30 @@ with tab1:
             label="Choose Stock to Analyze",
             options=combined_symbols
         )
-        stock_info = get_yf_company_info(ticker_to_analyze) # STOCK INFOOOO
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown(info_card("Symbol", stock_info["symbol"].iloc[0]), unsafe_allow_html=True)
-        with col2:
-            st.markdown(info_card("Short Name", stock_info["shortName"].iloc[0]), unsafe_allow_html=True)
-        with col3:
-            st.markdown(info_card("Country", stock_info["country"].iloc[0]), unsafe_allow_html=True)
-        
-        col4, col5, col6 = st.columns(3)
-        with col4:
-            st.markdown(info_card("Sector", stock_info["sector"].iloc[0]), unsafe_allow_html=True)
-        with col5:
-            st.markdown(info_card("Industry", stock_info["industry"].iloc[0]), unsafe_allow_html=True)
-        with col6:
-            st.markdown(info_card("Website", stock_info["website"].iloc[0]), unsafe_allow_html=True)
+        try:
+            stock_info = get_yf_company_info(ticker_to_analyze) # STOCK INFOOOO
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.markdown(info_card("Symbol", stock_info["symbol"].iloc[0]), unsafe_allow_html=True)
+            with col2:
+                st.markdown(info_card("Short Name", stock_info["shortName"].iloc[0]), unsafe_allow_html=True)
+            with col3:
+                st.markdown(info_card("Country", stock_info["country"].iloc[0]), unsafe_allow_html=True)
+            
+            col4, col5, col6 = st.columns(3)
+            with col4:
+                st.markdown(info_card("Sector", stock_info["sector"].iloc[0]), unsafe_allow_html=True)
+            with col5:
+                st.markdown(info_card("Industry", stock_info["industry"].iloc[0]), unsafe_allow_html=True)
+            with col6:
+                st.markdown(info_card("Website", stock_info["website"].iloc[0]), unsafe_allow_html=True)
 
-        st.markdown(info_card("Business Summary", stock_info["longBusinessSummary"].iloc[0]), unsafe_allow_html=True)
-        st.divider()
+            st.markdown(info_card("Business Summary", stock_info["longBusinessSummary"].iloc[0]), unsafe_allow_html=True)
+            st.divider()
 
-        col7, col8, col9 = st.columns(3)
-
+            col7, col8, col9 = st.columns(3)
+        except Exception as e:
+            st.warning("Missing Data! Try loading Initial data from Settings!")
         try:
             # Versuche vorhandene Daten zu lesen
             up_to_date_av_entries = get_processed_entries_by_symbol(
