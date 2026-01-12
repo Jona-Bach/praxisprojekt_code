@@ -144,10 +144,10 @@ def load_data_from_source(
     Lädt Daten je nach ausgewählter Quelle mit deinen bestehenden Funktionen
     und konvertiert anschließend String-Spalten bestmöglich in numerische / Datums-Typen.
     """
-    if source == "Price History":
+    if source == "Entire Yahoo Finance Pricing Table":
         df = get_all_yf_price_history()
 
-    elif source == "Single Stock Price":
+    elif source == "Yahoo Finance Pricing Single Stock":
         if not symbol:
             return pd.DataFrame()
         df = get_yf_pricing_raw(symbol)
@@ -591,8 +591,8 @@ with st.sidebar:
         "Datenquelle",
         [
             "No Table selected",
-            "Price History",
-            "Single Stock Price",
+            "Entire Yahoo Finance Pricing Table",
+            "Yahoo Finance Pricing Single Stock",
             "Alphavantage",
             "Alphavantage (Combined)",
             "User Tables",
@@ -602,7 +602,7 @@ with st.sidebar:
     symbol = None
     table_name = None
 
-    if data_source == "Single Stock Price":
+    if data_source == "Yahoo Finance Pricing Single Stock":
         symbol = st.text_input("Symbol (z.B. AAPL, MSFT)", value="AAPL")
 
     elif data_source == "No Table selected":

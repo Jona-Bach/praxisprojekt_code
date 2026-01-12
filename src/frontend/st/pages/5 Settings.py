@@ -186,7 +186,7 @@ with st.expander("Data Settings"):
         col1, col2 = st.columns([1,1]) 
         with col1:
             if st.button("Load initial Data"):
-                with st.spinner("Loading Initial Ticker Data"):
+                with st.spinner("Loading Initial Ticker Data (This might take while!)"):
                     load_initial_data()
             st.divider()
             st.write("Create new initial Tickers list")

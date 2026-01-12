@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 from src.backend.api_services.av_connect import fetch_alphavantage_raw, fetch_alphavantage_price_today
-from src.backend.api_services.yf_connect import download_yf_company_info, download_yf_pricing_raw_timeperiod
+from src.backend.api_services.yf_connect import download_yf_company_info, download_yf_pricing_raw_timeperiod, download_price_history
 from src.backend.data_model import TICKERS
 from backend.database.db_functions import get_list_system_config
 from backend.data_processing.alphavantage_processed import process_alphavantage_raw_db
@@ -47,7 +47,7 @@ def load_initial_data():
     status_raw_data = st.empty()
     status_pricing_data = st.empty()
     today = datetime.today()
-    print(f"Loading data at: {today} ")
+    print(f"Loading data at: {today} (This might take a while!)")
     #status_raw_data.write("Loading...")
 
     new_custom_ticker = get_list_system_config("Custom_Initial_Tickers")
@@ -64,6 +64,7 @@ def load_initial_data():
             status_pricing_data.write(f"Fetched Pricing Data for: {ticker}")
             download_yf_company_info(tickers=[ticker])
             download_yf_pricing_raw_timeperiod(tickers_to_download=[ticker], startdate=timeperiod_for_download)
+            download_price_history(start=timeperiod_for_download)
             status_pricing_data.write(f"Fetched Data for: {ticker}")
             print(f"{ticker} added to Database!")
             st.success(f"{ticker} was added successfully to the Database!")
